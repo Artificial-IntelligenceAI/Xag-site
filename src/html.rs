@@ -142,8 +142,9 @@ pub fn document(
 </head>
 <body>
 <div id="fallback">
-<header class="hero{compact}"><div class="hero-inner"><div class="hero-words">
-<h1><span class="wordmark">Xag</span></h1>
+<header class="hero{compact}"><div class="hero-inner">
+<div class="hero-mark"><h1><span class="wordmark">Xag</span></h1></div>
+<div class="hero-words">
 {tagline}
 <p class="warning">Under development, don&#39;t treat this website&#39;s info as <a href="{repo}">truth</a>.</p>
 </div></div></header>

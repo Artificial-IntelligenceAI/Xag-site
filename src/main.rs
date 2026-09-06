@@ -608,7 +608,7 @@ fn App() -> impl IntoView {
         <header class="hero" class:compact=move || !at_home()>
             <Space />
             <div class="hero-inner">
-                <div class="hero-words">
+                <div class="hero-mark">
                     <h1>
                         {move || if !alien() {
                             view! { <span class="wordmark">"Xag"</span> }.into_any()
@@ -624,6 +624,9 @@ fn App() -> impl IntoView {
                             }.into_any()
                         }}
                     </h1>
+                </div>
+
+                <div class="hero-words">
                     <p class="tagline">
                         {content::TAGLINE.iter().map(|(text, good)| view! {
                             <span class=if *good { "good" } else { "cost" }>{*text}</span>

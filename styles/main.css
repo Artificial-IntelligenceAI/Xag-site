@@ -88,12 +88,24 @@ body {
   padding: 5rem 1.5rem;
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
+  grid-template-areas:
+    "mark  mark"
+    "words cards";
   gap: 3rem;
   align-items: center;
 }
 
+.hero-mark { grid-area: mark; justify-self: center; margin-bottom: 1rem; }
+.hero-words { grid-area: words; }
+.cards { grid-area: cards; }
+
 /* The cards only exist on the front page, so the others get the column back. */
-.hero.compact .hero-inner { grid-template-columns: minmax(0, 1fr); }
+.hero.compact .hero-inner {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "mark" "words";
+}
+
+.hero.compact .hero-mark { margin-bottom: 0; }
 
 /* On every page but the first, the sky stays and the words stand aside. */
 .hero.compact { min-height: 0; }
@@ -104,6 +116,19 @@ body {
 .hero.compact .cta { display: none; }
 
 .hero-words { max-width: 38rem; }
+
+/* The name sits on something rather than floating in the sky. The same glass
+ * as the cards and the dock, so it belongs to the page rather than to the
+ * space behind it. */
+.hero-mark h1 {
+  padding: 0.12em 0.42em 0.2em;
+  border-radius: 24px;
+  background: rgba(7, 18, 14, 0.55);
+  border: 1px solid var(--green-line);
+  backdrop-filter: blur(18px) saturate(0.9);
+  -webkit-backdrop-filter: blur(18px) saturate(0.9);
+  box-shadow: 0 12px 44px rgba(0, 0, 0, 0.5);
+}
 
 .hero h1 {
   font-family: var(--sans);
@@ -561,7 +586,12 @@ blockquote footer { font-family: var(--mono); font-size: 0.8rem; }
 .fallback h1 { font-size: 3rem; margin: 0 0 1.25rem; letter-spacing: -0.04em; }
 
 @media (max-width: 60rem) {
-  .hero-inner { grid-template-columns: 1fr !important; gap: 2.5rem; padding-block: 4rem; }
+  .hero-inner {
+    grid-template-columns: 1fr !important;
+    grid-template-areas: "mark" "words" "cards" !important;
+    gap: 2.5rem;
+    padding-block: 4rem;
+  }
   .hero { min-height: 0; }
   .scrim {
     background:
@@ -971,6 +1001,7 @@ button.wordmark:focus-visible {
 [data-theme^="solarized"] .marks-table strong { color: var(--emph); }
 
 /* Flat. No blur behind anything, no light coming off anything. */
+[data-theme^="solarized"] .hero-mark h1,
 [data-theme^="solarized"] .card,
 [data-theme^="solarized"] .dock,
 [data-theme^="solarized"] .theme {
@@ -1148,10 +1179,11 @@ button.wordmark:focus-visible {
   }
 }
 
+[data-theme="silver"] .hero-mark h1,
 [data-theme="silver"] .card,
 [data-theme="silver"] .dock,
 [data-theme="silver"] .theme {
-  background: rgba(16, 19, 24, 0.78);
+  background: rgba(16, 19, 24, 0.72);
 }
 
 [data-theme="silver"] .cta:hover { box-shadow: 0 6px 28px rgba(203, 214, 228, 0.26); }

@@ -92,9 +92,13 @@ pub fn default_theme(host: &str) -> Theme {
 /// A first segment that is not a theme is taken as the page, so `/philosophy`
 /// still lands on the right page and only leaves the theme unsaid.
 pub fn split(path: &str) -> (Option<Theme>, String) {
+    // A `.html` on the end is the same place: the built documents are named
+    // for their routes, and a host that serves `/alien/philosophy.html` as well
+    // as `/alien/philosophy` must not leave the app showing a different page
+    // from the one it mounted over.
     let mut parts = path
         .split('/')
-        .map(str::trim)
+        .map(|part| part.trim().trim_end_matches(".html"))
         .filter(|part| !part.is_empty());
 
     let Some(first) = parts.next() else {
@@ -179,6 +183,17 @@ mod tests {
     fn a_page_without_a_theme_still_names_the_page() {
         assert_eq!(split("/philosophy"), (None, "philosophy".into()));
         assert_eq!(split("/credits"), (None, "credits".into()));
+    }
+
+    /// The built files are named for their routes, so both spellings of an
+    /// address have to arrive at the same place.
+    #[test]
+    fn an_html_suffix_is_the_same_place() {
+        assert_eq!(split("/alien/philosophy.html"), (Some(Theme::Alien), "philosophy".into()));
+        assert_eq!(split("/lite2.html"), (Some(Theme::Lite2), String::new()));
+        assert_eq!(split("/credits.html"), (None, "credits".into()));
+        // And a page that merely ends in those letters is untouched.
+        assert_eq!(split("/philosophy"), (None, "philosophy".into()));
     }
 
     #[test]
