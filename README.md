@@ -65,8 +65,19 @@ By hand, when that is wanted:
 
 ```sh
 trunk build --release          # with `trunk serve` NOT running
+cargo run --features prerender --bin prerender -- dist https://xag-lang.com
 npx wrangler pages deploy dist --project-name=xag-site
 ```
+
+The middle step is what makes the site readable without WebAssembly. Trunk
+writes one `index.html` for every address; the generator replaces it with a real
+document per route — that page's prose, its own title, and the palette the
+address asked for — and writes `robots.txt`, `sitemap.xml` and `llms.txt`
+beside them. The app then mounts over whatever was served, so a browser gets
+the words first and the sky a moment later.
+
+Both readings come from `src/content.rs`. There is one copy of every sentence,
+because two would disagree eventually.
 
 **Stop `trunk serve` before building for deploy.** The dev server writes to the
 same `dist/`, and what it writes carries an autoreload client that opens a

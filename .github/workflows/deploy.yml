@@ -63,6 +63,12 @@ jobs:
       - name: Build
         run: trunk build --release
 
+      # Trunk writes one document for every address. This replaces them with a
+      # real one per route, so anything that will not run WebAssembly is served
+      # that page's words rather than the front page's hundred.
+      - name: Write the HTML that is served before the WebAssembly
+        run: cargo run --locked --features prerender --bin prerender -- dist https://xag-lang.com
+
       # `trunk serve` writes to the same directory and what it writes carries an
       # autoreload client pointed at an address only the dev server has. It
       # cannot get here from a clean checkout, which is exactly why this is
@@ -73,9 +79,17 @@ jobs:
             echo "::error::dist carries the dev server's autoreload client"
             exit 1
           fi
-          for f in _headers _redirects index.html; do
+          for f in _headers _redirects index.html robots.txt sitemap.xml llms.txt \
+                   alien/index.html alien/philosophy/index.html \
+                   lite2/credits/index.html; do
             test -f "dist/$f" || { echo "::error::dist/$f is missing"; exit 1; }
           done
+
+          # The point of the whole exercise: the words have to be in the HTML.
+          grep -q "Two marks, and only two" dist/alien/philosophy/index.html \
+            || { echo "::error::the prose did not make it into the built HTML"; exit 1; }
+          grep -q "User-agent" dist/robots.txt \
+            || { echo "::error::robots.txt is not a robots file"; exit 1; }
 
       - name: Deploy
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''

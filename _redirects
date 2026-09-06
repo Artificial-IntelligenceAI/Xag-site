@@ -1,7 +1,15 @@
-# Every address is the same page: the app reads the path and decides what to
-# show. Without this, /alien/philosophy is a file that does not exist and the
-# host says so.
+# Real files win. Without these four lines the catch-all below swallows them,
+# and a crawler asking for robots.txt is handed the website — which is what was
+# happening.
+/robots.txt    /robots.txt    200
+/sitemap.xml   /sitemap.xml   200
+/llms.txt      /llms.txt      200
+/_headers      /_headers      200
+
+# Every remaining address is the app. Pre-rendered documents sit at their own
+# paths as real files and are served before this is consulted, so what a
+# crawler gets is that page rather than the front one.
 #
-# 200 rather than 301: the address must stay what the reader typed, or routing
-# has nothing to read.
+# 200 rather than 301: the address must stay what the reader typed, or the
+# routing has nothing to read.
 /*  /index.html  200

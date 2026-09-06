@@ -6,6 +6,25 @@ description = "The website for Xag"
 license = "Apache-2.0 OR MIT"
 publish = false
 
+[lib]
+name = "xag_site"
+path = "src/lib.rs"
+
+# The site itself, compiled to WebAssembly.
+[[bin]]
+name = "xag-site"
+path = "src/main.rs"
+
+# Writes the HTML that is served before the WebAssembly has loaded. Behind a
+# feature so that building for wasm32 does not try to build it too.
+[[bin]]
+name = "prerender"
+path = "src/prerender.rs"
+required-features = ["prerender"]
+
+[features]
+prerender = []
+
 [dependencies]
 console_error_panic_hook = "0.1.7"
 leptos = { version = "0.8", features = ["csr"] }

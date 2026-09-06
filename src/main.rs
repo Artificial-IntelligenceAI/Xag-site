@@ -5,16 +5,15 @@
 //! message is the one `xagc check` actually printed. Nothing on this page
 //! describes a language feature that was not exercised first.
 
-mod route;
 mod space;
-mod syntax;
 mod warp;
+
+use xag_site::{content, markup, route, syntax};
 
 use leptos::prelude::*;
 use syntax::tokenize;
 
 const REPO: &str = "https://github.com/Artificial-IntelligenceAI/Xag-lang";
-const SITE_REPO: &str = "https://github.com/Artificial-IntelligenceAI/Xag-site";
 
 /// Colours a piece of Xag. One span per token, in the order they were read.
 fn highlight(src: &str) -> impl IntoView {
@@ -491,277 +490,80 @@ fn Dock(
     view! { <nav class="dock" aria-label="Sections">{items}</nav> }
 }
 
+/// One block of a page.
+///
+/// Prose goes in as HTML from the shared markup, so what the app shows and what
+/// was written into `dist` at build time are the same words rendered the same
+/// way — there is no second copy to drift.
 #[component]
-fn Home() -> impl IntoView {
-    view! {
-        <p class="lede">
-            "A programming language built around high performance, helpful error
-             messages, and Rust-style memory management. There is no "
-            <code>"int"</code>" on its own, because there is no size to assume.
-             Programs are compiled ahead of time, either to native code or to a form
-             run by an AOT interpreter."
-        </p>
-
-        <section id="reading">
-            <h2>"Reading a program"</h2>
-            <p>
-                "Items sit next to each other and are used in order. Nothing is
-                 concatenated into a third thing, so there is no "<code>"+"</code>
-                " for text."
-            </p>
-            <Sample
-                file="counting.xag"
-                src=include_str!("../samples/counting.xag")
-                output="sum to 10 = 55"
-            />
-        </section>
-
-        <section id="ownership">
-            <h2>"What a name owns, and what it lends"</h2>
-            <p>
-                "Ownership is Rust's, checked when the program is compiled, with no
-                 garbage collector under it. A transfer is spelled at the call site,
-                 so a reader never has to work out from a function's signature that a
-                 value has left."
-            </p>
-            <Sample
-                file="borrowing.xag"
-                src=include_str!("../samples/borrowing.xag")
-                output="size: 5\nafter: hello!\nlonger: hello!\nkept: spare"
-            />
-        </section>
-
-        <section id="errors">
-            <h2>"When it has something to say"</h2>
-            <p>
-                "Take the program above, hand a value over for good, and then ask for
-                 it again. This is what comes back — not a paraphrase of it:"
-            </p>
-            <pre class="diagnostic"><code>{include_str!("../samples/moved.output.txt")}</code></pre>
-            <p>
-                "A diagnostic that points at the wrong thing, or names a rule the
-                 program did not break, is a bug of the same kind as miscompiling —
-                 the compiler is telling the reader something untrue either way."
-            </p>
-        </section>
-
-        <section id="building">
-            <h2>"Building it"</h2>
-            <p>
-                "The compiler is written in C++20 against LLVM's native C++ API. It
-                 needs LLVM 23 or newer, CMake and Ninja."
-            </p>
-            <pre class="shell"><code>{
-"git clone https://github.com/Artificial-IntelligenceAI/Xag-lang.git\n\
-cd Xag-lang\n\
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release\n\
-ninja -C build\n\
-./build/xagc run examples/counting.xag"
-            }</code></pre>
-            <p>
-                <code>"xagc run"</code>" runs a program on the test interpreter, "
-                <code>"xagc fast"</code>" on the fast one, and "<code>"xagc build"</code>
-                " compiles it ahead of time and writes an executable beside it. "
-                <code>"xagc check"</code>" checks a program without running it."
-            </p>
-            <p class="warning">
-                "There is no install yet. Building from source is the way to run it."
-            </p>
-        </section>
-    }
-}
-
-#[component]
-fn Philosophy() -> impl IntoView {
-    view! {
-        <p class="lede">
-            "What is unusual about Xag is not what it can do. It is what it refuses
-             to decide on your behalf."
-        </p>
-
-        <section id="marks">
-            <h2>"Two marks, and only two"</h2>
+fn BlockView(block: &'static content::Block) -> impl IntoView {
+    use content::Block;
+    match block {
+        Block::Para(text) => view! { <p inner_html=markup::to_html(text)></p> }.into_any(),
+        Block::Claim(text) => {
+            view! { <p class="claim" inner_html=markup::to_html(text)></p> }.into_any()
+        }
+        Block::Warning(text) => {
+            view! { <p class="warning" inner_html=markup::to_html(text)></p> }.into_any()
+        }
+        Block::Code(src) => view! { <Code src=src.to_string() /> }.into_any(),
+        Block::Shell(src) => view! { <pre class="shell"><code>{*src}</code></pre> }.into_any(),
+        Block::Diagnostic(text) => {
+            view! { <pre class="diagnostic"><code>{*text}</code></pre> }.into_any()
+        }
+        Block::Sample { file, src, output } => {
+            view! { <Sample file=file src=src output=output /> }.into_any()
+        }
+        Block::MarksTable => view! {
             <table class="marks-table">
                 <tbody>
-                    <tr>
-                        <td><code class="tk-name">"'…'"</code></td>
-                        <td>"a "<strong>"name"</strong></td>
-                    </tr>
-                    <tr>
-                        <td><code class="tk-value">"*…*"</code></td>
-                        <td>"a "<strong>"written value"</strong></td>
-                    </tr>
-                    <tr>
-                        <td><code class="tk-word">"word"</code></td>
-                        <td>"a type, a segment of a chain, or a function being called"</td>
-                    </tr>
+                    {content::MARKS.iter().map(|(class, mark, meaning)| view! {
+                        <tr>
+                            <td><code class=*class>{*mark}</code></td>
+                            <td inner_html=markup::to_html(meaning)></td>
+                        </tr>
+                    }).collect_view()}
                 </tbody>
             </table>
-            <p>
-                "A quoted thing is a name wherever you meet it. It never has to be
-                 re-read as a value because of where it happens to sit — position is
-                 never consulted."
-            </p>
-            <p>
-                "Every declaration marks the name it gives, including a function's
-                 and a struct's. What is being named is marked; what is being used is
-                 whatever it was declared as."
-            </p>
-            <Code src="fn.int64 'sum-to' [int64 'n'] { give ['n']; }".to_string() />
-            <p>
-                "There is no third mark for text versus number, because the type
-                 already answers that: "<code class="tk-value">"*1000*"</code>" is a
-                 number under "<code>"int64"</code>" and four characters under "
-                <code>"str"</code>"."
-            </p>
-            <p class="claim">"There are only two marks and there will only ever be two."</p>
-            <Marks />
-        </section>
-
-        <section id="chains">
-            <h2>"Declarations are chains"</h2>
-            <p>
-                "What is unusual about a name lives in the chain that declares it.
-                 Every segment but the type has a default, and the default is always
-                 the least powerful thing — so a word appears only where there was a
-                 choice."
-            </p>
-            <Code src="var.mut.many.int64 'xs'".to_string() />
-            <p>
-                "That one changes, holds several, and holds 64-bit whole numbers.
-                 Drop "<code>"mut"</code>" and it does not change. Drop "
-                <code>"many"</code>" and it holds one."
-            </p>
-        </section>
-
-        <section id="engines">
-            <h2>"Three engines and an oracle"</h2>
-            <p>"There are three ways to run an Xag program, and they are kept apart on purpose."</p>
+        }
+        .into_any(),
+        Block::LivePanel => view! { <Marks /> }.into_any(),
+        Block::Bullets(items) => view! {
             <ul class="engines">
-                <li>
-                    <strong>"A test interpreter"</strong>
-                    " — built to be obviously correct rather than fast. It walks the IR
-                     as written and does nothing clever anywhere. It is the one to
-                     believe when the engines disagree."
-                </li>
-                <li>
-                    <strong>"A fast interpreter"</strong>
-                    " — it turns the graph into flat code once and then runs it without
-                     looking anything up again. It shares nothing with the test
-                     interpreter but the runtime, on purpose: two engines that borrow
-                     from each other agree about what they borrowed, and a vote between
-                     them proves nothing."
-                </li>
-                <li>
-                    <strong>"A native backend"</strong>
-                    " — compiled ahead of time through LLVM."
-                </li>
+                {items.iter().map(|(lead, rest)| view! {
+                    <li>
+                        <strong>{*lead}</strong>
+                        " — "
+                        <span inner_html=markup::to_html(rest)></span>
+                    </li>
+                }).collect_view()}
             </ul>
-            <p class="claim">
-                "Two engines can say that something is wrong; three can say which."
-            </p>
-            <p>
-                "A program generator writes random Xag programs, asks every engine what
-                 they say, and when they differ reports which one is out of step with
-                 the other two."
-            </p>
-            <p>
-                "Decimal gets a check the oracle cannot give it. Three engines calling
-                 one runtime agree about everything inside that runtime, so a mistake
-                 in the arithmetic itself is one all three would make together. So the
-                 decimal results are checked against Python's "<code>"decimal"</code>
-                 " — libmpdec, written by someone else from the same IBM specification,
-                 and derived from nothing here. Four hundred thousand cases agree
-                 exactly, apart from raising to a power, which the specification itself
-                 allows to be out by one in the last place."
-            </p>
-            <p>
-                "They are also asked of a real decimal floating-point unit. No machine
-                 here has one, so the test cross-compiles a program with no operating
-                 system under it, hands it to QEMU where a kernel would go, and reads
-                 the answers back over the console. Twenty thousand sums, differences,
-                 products and quotients agree exactly, cohorts included."
-            </p>
-        </section>
+        }
+        .into_any(),
+        Block::Quote { paragraphs, attribution } => view! {
+            <blockquote>
+                {paragraphs.iter().map(|p| view! {
+                    <p inner_html=markup::to_html(p)></p>
+                }).collect_view()}
+                <footer>{*attribution}</footer>
+            </blockquote>
+        }
+        .into_any(),
     }
 }
 
 #[component]
-fn Credits() -> impl IntoView {
+fn PageView(page: &'static content::Page) -> impl IntoView {
     view! {
-        <section id="honest">
-            <h2>"Why would anyone ever use Xag?"</h2>
-            <blockquote>
-                <p>"Honestly, I don't know. 😂"</p>
-                <p>
-                    "The code written is mostly or 100% AI-made. Why? Because, I'm more
-                     of a designer, not a C++ stroke-inducing syntax reader 🤣.
-                     No offense."
-                </p>
-                <footer>"— the README"</footer>
-            </blockquote>
-        </section>
-
-        <section id="source">
-            <h2>"Source"</h2>
-            <p>
-                "The compiler, the runtime, the three engines and the oracle: "
-                <a href=REPO>{REPO}</a>
-            </p>
-            <p>
-                "A diagnostic that is wrong, a diagnostic that is confusing, and a
-                 program Xag accepts that it should not are all the same kind of bug:
-                 the compiler saying something untrue. They belong in "
-                <a href=format!("{REPO}/issues")>"the issue tracker"</a>"."
-            </p>
-            <p>
-                "This site is a Rust program compiled to WebAssembly. Its source is "
-                <a href=SITE_REPO>{SITE_REPO}</a>
-            </p>
-        </section>
-
-        <section id="license">
-            <h2>"License"</h2>
-            <p>"Copyright 2026 Tankun Sriket"</p>
-            <p>"Licensed under either of"</p>
-            <ul class="engines">
-                <li>
-                    "Apache License, Version 2.0 — "
-                    <a href="https://www.apache.org/licenses/LICENSE-2.0">
-                        "apache.org/licenses/LICENSE-2.0"
-                    </a>
-                </li>
-                <li>
-                    "MIT license — "
-                    <a href="https://opensource.org/licenses/MIT">
-                        "opensource.org/licenses/MIT"
-                    </a>
-                </li>
-            </ul>
-            <p>"at your option."</p>
-            <p>
-                "Unless you explicitly state otherwise, any contribution intentionally
-                 submitted for inclusion in this project by you, as defined in the
-                 Apache-2.0 license, shall be dual licensed as above, without any
-                 additional terms or conditions."
-            </p>
-        </section>
-
-        <section id="credits">
-            <h2>"Credits"</h2>
-            <p>
-                "Xag is designed by human Tankun Sriket, and implemented by AI
-                 (Anthropic's Claude). The compiler is written against LLVM, and its
-                 grapheme handling is built from the Unicode Character Database,
-                 version 17.0.0."
-            </p>
-            <p>
-                "The decimal arithmetic is checked against Python's "
-                <code>"decimal"</code>" — libmpdec, by Stefan Krah — and against IBM's
-                 decimal floating-point unit under QEMU. Neither is derived from
-                 anything here, which is what makes them worth asking."
-            </p>
-        </section>
+        {(!page.lede.is_empty()).then(|| view! {
+            <p class="lede" inner_html=markup::to_html(page.lede)></p>
+        })}
+        {page.sections.iter().map(|section| view! {
+            <section id=section.id>
+                <h2>{section.heading}</h2>
+                {section.blocks.iter().map(|b| view! { <BlockView block=b /> }).collect_view()}
+            </section>
+        }).collect_view()}
     }
 }
 
@@ -860,13 +662,9 @@ fn App() -> impl IntoView {
         </p>
 
         <main>
-            {move || match page.get() {
-                Page::Philosophy => view! { <Philosophy /> }.into_any(),
-                Page::Credits => view! { <Credits /> }.into_any(),
-                // Download and Docs cannot be reached: the dock will not take a
-                // click on either of them.
-                _ => view! { <Home /> }.into_any(),
-            }}
+            // Download and Docs cannot be reached: the dock will not take a
+            // click on either of them, so `content::page` never sees them.
+            {move || view! { <PageView page=content::page(page.get().slug()) /> }}
         </main>
 
         <Dock page=page set_page=set_page theme=theme />

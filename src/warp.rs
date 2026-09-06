@@ -111,7 +111,9 @@ impl Warp {
         }
     }
 
-    /// Whether the journey is over.
+    /// Whether the journey is over. Read by the tests rather than the page: the
+    /// page asks `reveal`, which already knows.
+    #[cfg_attr(not(test), allow(dead_code))]
     pub fn stopped(&self) -> bool {
         self.elapsed >= REVEAL_AT
     }
