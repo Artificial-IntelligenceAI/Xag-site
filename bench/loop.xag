@@ -1,0 +1,16 @@
+# A billion iterations, with a `mod` in the body.
+#
+# `mod` is here because it is the operation that does not compile to an
+# instruction: it goes out to the runtime, so the optimiser cannot reach
+# through it. `add.xag` beside this one is the same loop without it.
+#
+# The sum is written with `mod` rather than as a plain series so that nothing
+# can work the answer out ahead of time instead of running the loop.
+
+START {
+    var.mut.int64 'total' = [*0*];
+    loop.range.int64 'i' = [*1*, *1000000000*] {
+        set 'total' = ['total' + ('i' mod *7*)];
+    }
+    print.stdout[str:*total * 'total' \n];
+}
