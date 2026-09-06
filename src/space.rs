@@ -167,8 +167,67 @@ pub fn rocks() -> Vec<Rock> {
             spin_rate: rng.range(-5.5, 5.5),
         });
     }
+    settle(&mut out);
     out
 }
+
+/// The viewport the starting layout is worked out against. A rock's place is a
+/// percentage but its size is in pixels, so whether two of them overlap is a
+/// question that needs a window to be asked in. This is a middling one.
+const NOMINAL: (f32, f32) = (1440.0, 820.0);
+
+/// Pushes apart any two rocks that begin on top of each other.
+///
+/// Without this the page opens mid-explosion: two rocks laid down overlapping
+/// are touching on the first frame and burst before anybody has seen them,
+/// which reads as a glitch rather than as an event.
+fn settle(rocks: &mut [Rock]) {
+    let (w, h) = NOMINAL;
+
+    for _ in 0..24 {
+        let mut moved = false;
+
+        for i in 0..rocks.len() {
+            for j in (i + 1)..rocks.len() {
+                if rocks[i].depth != rocks[j].depth {
+                    continue;
+                }
+
+                let centre = |r: &Rock| {
+                    (r.left / 100.0 * w + r.size / 2.0, r.top / 100.0 * h + r.size / 2.0)
+                };
+                let (ax, ay) = centre(&rocks[i]);
+                let (bx, by) = centre(&rocks[j]);
+                let apart = ((ax - bx).powi(2) + (ay - by).powi(2)).sqrt();
+                // A margin over touching, so drifting does not put them back
+                // together within the first second either.
+                let wanted = (rocks[i].size + rocks[j].size) * REACH_F32 + 24.0;
+
+                if apart >= wanted {
+                    continue;
+                }
+
+                // Straight up if they are exactly on top of one another, which
+                // is otherwise a direction nobody can compute.
+                let (dx, dy) = if apart < 0.001 { (0.0, 1.0) } else { ((ax - bx) / apart, (ay - by) / apart) };
+                let shove = (wanted - apart) / 2.0;
+
+                rocks[i].left += dx * shove / w * 100.0;
+                rocks[i].top += dy * shove / h * 100.0;
+                rocks[j].left -= dx * shove / w * 100.0;
+                rocks[j].top -= dy * shove / h * 100.0;
+                moved = true;
+            }
+        }
+
+        if !moved {
+            break;
+        }
+    }
+}
+
+/// `REACH` as the f32 this works in.
+const REACH_F32: f32 = 0.46;
 
 pub fn stars() -> Vec<Star> {
     let mut rng = Rng(0x00C0_FFEE);
@@ -238,6 +297,31 @@ mod tests {
         assert!(rocks.iter().all(|r| r.vx.abs() + r.vy.abs() > 0.5));
     }
 
+    /// The page must not open mid-explosion.
+    #[test]
+    fn nothing_starts_on_top_of_anything_else() {
+        let rocks = rocks();
+        let (w, h) = NOMINAL;
+        for i in 0..rocks.len() {
+            for j in (i + 1)..rocks.len() {
+                if rocks[i].depth != rocks[j].depth {
+                    continue;
+                }
+                let centre = |r: &Rock| {
+                    (r.left / 100.0 * w + r.size / 2.0, r.top / 100.0 * h + r.size / 2.0)
+                };
+                let (ax, ay) = centre(&rocks[i]);
+                let (bx, by) = centre(&rocks[j]);
+                let apart = ((ax - bx).powi(2) + (ay - by).powi(2)).sqrt();
+                let touching = (rocks[i].size + rocks[j].size) * REACH_F32;
+                assert!(
+                    apart > touching,
+                    "rocks {i} and {j} start {apart:.0} apart and touch at {touching:.0}"
+                );
+            }
+        }
+    }
+
     /// A rock has to be a shape, not a line or a fold.
     #[test]
     fn a_rock_is_a_closed_shape() {
@@ -249,6 +333,22 @@ mod tests {
     }
 }
 
+/// How many pieces a rock comes apart into.
+const SHARDS_PER_ROCK: usize = 7;
+
+/// Enough for three collisions happening at once. Past that the oldest pieces
+/// are still on screen and nobody is counting.
+pub const SHARD_POOL: usize = SHARDS_PER_ROCK * 6;
+
+pub const FLASH_POOL: usize = 4;
+
+/// How long a rock is gone for before it comes back in from an edge.
+const GONE_FOR: f64 = 1.2;
+
+/// A rock's outline reaches 46 units in a box of 100, so this is the radius of
+/// the circle that holds it.
+const REACH: f64 = 0.46;
+
 /// One rock's motion, kept apart from the browser so it can be checked.
 ///
 /// A stylesheet can only interpolate between two states it is handed. This is
@@ -258,15 +358,19 @@ mod tests {
 pub struct Drift {
     frac_left: f64,
     frac_top: f64,
-    x: f64,
-    y: f64,
+    pub x: f64,
+    pub y: f64,
     vx: f64,
     vy: f64,
-    turned: f64,
+    pub turned: f64,
     spin_rate: f64,
+    size: f64,
+    depth: Depth,
     /// Far enough out that a rock is gone from view before it is moved.
     margin: f64,
     placed: bool,
+    /// Seconds left before it comes back. Zero means it is here.
+    gone_for: f64,
 }
 
 impl Drift {
@@ -280,9 +384,25 @@ impl Drift {
             vy: rock.vy as f64,
             turned: 0.0,
             spin_rate: rock.spin_rate as f64,
+            size: rock.size as f64,
+            depth: rock.depth,
             margin: rock.size as f64 + 40.0,
             placed: false,
+            gone_for: 0.0,
         }
+    }
+
+    /// Here to be seen and to be hit. A rock in pieces is neither.
+    pub fn present(&self) -> bool {
+        self.gone_for <= 0.0
+    }
+
+    pub fn centre(&self) -> (f64, f64) {
+        (self.x + self.size / 2.0, self.y + self.size / 2.0)
+    }
+
+    pub fn reach(&self) -> f64 {
+        self.size * REACH
     }
 
     /// Carries the rock forward by `secs`, wrapping it around a `width` by
@@ -293,6 +413,11 @@ impl Drift {
             self.x = self.frac_left * width;
             self.y = self.frac_top * height;
             self.placed = true;
+        }
+
+        if self.gone_for > 0.0 {
+            self.gone_for -= secs;
+            return;
         }
 
         self.x += self.vx * secs;
@@ -321,11 +446,258 @@ impl Drift {
             self.turned
         )
     }
+
+    /// Takes it out of the sky, and arranges for it to come back.
+    fn shatter(&mut self) {
+        self.gone_for = GONE_FOR;
+    }
+
+    /// Back in from an edge on a new heading, keeping the speed its distance
+    /// gave it so the parallax still holds.
+    fn returns(&mut self, rng: &mut Rng, width: f64, height: f64) {
+        let speed = (self.vx * self.vx + self.vy * self.vy).sqrt();
+        let heading = rng.range(0.0, TAU) as f64;
+        self.vx = heading.cos() * speed;
+        self.vy = heading.sin() * speed;
+        self.turned = 0.0;
+
+        // On whichever edge it is now heading away from, so it drifts inwards
+        // rather than straight back out again.
+        if self.vx.abs() > self.vy.abs() {
+            self.x = if self.vx > 0.0 { -self.margin } else { width + self.margin };
+            self.y = rng.range(0.0, height as f32) as f64;
+        } else {
+            self.y = if self.vy > 0.0 { -self.margin } else { height + self.margin };
+            self.x = rng.range(0.0, width as f32) as f64;
+        }
+    }
 }
 
-/// Moves the rocks, one frame at a time. Everything it decides is `Drift`'s;
-/// this only reads the clock, reads the size of the sky, and writes a
-/// transform.
+/// A piece of a rock that has come apart.
+pub struct Shard {
+    pub x: f64,
+    pub y: f64,
+    vx: f64,
+    vy: f64,
+    pub turned: f64,
+    spin_rate: f64,
+    pub size: f64,
+    life: f64,
+    full_life: f64,
+}
+
+impl Shard {
+    fn idle() -> Self {
+        Shard {
+            x: 0.0,
+            y: 0.0,
+            vx: 0.0,
+            vy: 0.0,
+            turned: 0.0,
+            spin_rate: 0.0,
+            size: 0.0,
+            life: 0.0,
+            full_life: 1.0,
+        }
+    }
+
+    pub fn alive(&self) -> bool {
+        self.life > 0.0
+    }
+
+    /// Bright when it is new and gone by the end, which is the whole of the
+    /// explosion as far as the eye is concerned.
+    pub fn fade(&self) -> f64 {
+        (self.life / self.full_life).clamp(0.0, 1.0)
+    }
+
+    fn step(&mut self, secs: f64) {
+        if !self.alive() {
+            return;
+        }
+        self.life -= secs;
+        self.x += self.vx * secs;
+        self.y += self.vy * secs;
+        self.turned += self.spin_rate * secs;
+        // Thrown outwards and then slowing, so the burst reads as a burst
+        // rather than as a steady drift away.
+        let drag = (1.0 - 1.9 * secs).max(0.0);
+        self.vx *= drag;
+        self.vy *= drag;
+    }
+}
+
+/// The light of an impact, which is over before the pieces are.
+pub struct Flash {
+    pub x: f64,
+    pub y: f64,
+    pub size: f64,
+    life: f64,
+    full_life: f64,
+}
+
+impl Flash {
+    fn idle() -> Self {
+        Flash { x: 0.0, y: 0.0, size: 0.0, life: 0.0, full_life: 1.0 }
+    }
+
+    pub fn alive(&self) -> bool {
+        self.life > 0.0
+    }
+
+    pub fn fade(&self) -> f64 {
+        (self.life / self.full_life).clamp(0.0, 1.0)
+    }
+
+    /// Opens outwards as it goes.
+    pub fn spread(&self) -> f64 {
+        0.4 + 1.6 * (1.0 - self.fade())
+    }
+
+    fn step(&mut self, secs: f64) {
+        if self.alive() {
+            self.life -= secs;
+        }
+    }
+}
+
+/// Everything in the sky, and what happens when two bits of it meet.
+pub struct Sky {
+    pub drifts: Vec<Drift>,
+    pub shards: Vec<Shard>,
+    pub flashes: Vec<Flash>,
+    rng: Rng,
+}
+
+impl Default for Sky {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Sky {
+    pub fn new() -> Self {
+        Sky {
+            drifts: rocks().iter().map(Drift::new).collect(),
+            shards: (0..SHARD_POOL).map(|_| Shard::idle()).collect(),
+            flashes: (0..FLASH_POOL).map(|_| Flash::idle()).collect(),
+            rng: Rng(0x0BAD_5EED),
+        }
+    }
+
+    /// Carries the whole sky forward one frame.
+    pub fn step(&mut self, secs: f64, width: f64, height: f64) {
+        for drift in self.drifts.iter_mut() {
+            drift.step(secs, width, height);
+        }
+
+        for hit in self.collisions() {
+            self.burst(hit, width, height);
+        }
+
+        for shard in self.shards.iter_mut() {
+            shard.step(secs);
+        }
+        for flash in self.flashes.iter_mut() {
+            flash.step(secs);
+        }
+    }
+
+    /// Which pairs are touching.
+    ///
+    /// Only rocks at the same distance can meet: a speck far away and a boulder
+    /// close up are nowhere near each other, whatever the screen says, and
+    /// bursting them together would say the sky is flat.
+    fn collisions(&self) -> Vec<(usize, usize)> {
+        let mut hits = Vec::new();
+        for i in 0..self.drifts.len() {
+            for j in (i + 1)..self.drifts.len() {
+                let (a, b) = (&self.drifts[i], &self.drifts[j]);
+                if !a.present() || !b.present() || a.depth != b.depth {
+                    continue;
+                }
+                let (ax, ay) = a.centre();
+                let (bx, by) = b.centre();
+                let touching = a.reach() + b.reach();
+                let (dx, dy) = (ax - bx, ay - by);
+                if dx * dx + dy * dy <= touching * touching {
+                    hits.push((i, j));
+                }
+            }
+        }
+        hits
+    }
+
+    fn burst(&mut self, (i, j): (usize, usize), width: f64, height: f64) {
+        // A rock caught by two collisions in one frame only comes apart once.
+        if !self.drifts[i].present() || !self.drifts[j].present() {
+            return;
+        }
+
+        let (ax, ay) = self.drifts[i].centre();
+        let (bx, by) = self.drifts[j].centre();
+        let (mx, my) = ((ax + bx) / 2.0, (ay + by) / 2.0);
+        let biggest = self.drifts[i].size.max(self.drifts[j].size);
+
+        self.light(mx, my, biggest);
+
+        for k in [i, j] {
+            let (cx, cy) = self.drifts[k].centre();
+            let size = self.drifts[k].size;
+            self.scatter(cx, cy, size);
+            self.drifts[k].shatter();
+
+            // Put where it will be when it comes back, which it does not do
+            // until `gone_for` runs out — so moving it now is unseen.
+            let seed = self.rng.bits();
+            let mut rng = Rng(seed);
+            self.drifts[k].returns(&mut rng, width, height);
+        }
+    }
+
+    fn light(&mut self, x: f64, y: f64, size: f64) {
+        if let Some(flash) = self.flashes.iter_mut().find(|f| !f.alive()) {
+            flash.x = x;
+            flash.y = y;
+            flash.size = size * 1.5;
+            flash.full_life = 0.42;
+            flash.life = 0.42;
+        }
+    }
+
+    fn scatter(&mut self, x: f64, y: f64, size: f64) {
+        for _ in 0..SHARDS_PER_ROCK {
+            let heading = self.rng.range(0.0, TAU) as f64;
+            let speed = self.rng.range(70.0, 240.0) as f64;
+            let life = self.rng.range(0.7, 1.35) as f64;
+            let piece = self.rng.range(0.16, 0.34) as f64 * size;
+            let spin = self.rng.range(-260.0, 260.0) as f64;
+
+            let Some(shard) = self.shards.iter_mut().find(|s| !s.alive()) else {
+                return; // every piece is already in the air
+            };
+            shard.x = x;
+            shard.y = y;
+            shard.vx = heading.cos() * speed;
+            shard.vy = heading.sin() * speed;
+            shard.turned = 0.0;
+            shard.spin_rate = spin;
+            shard.size = piece;
+            shard.full_life = life;
+            shard.life = life;
+        }
+    }
+}
+
+/// A shape for each piece in the pool, worked out once so the markup can hold
+/// them and nothing has to build an outline while things are moving.
+pub fn shard_shapes() -> Vec<String> {
+    let mut rng = Rng(0x5EED_1234);
+    (0..SHARD_POOL).map(|_| outline(&mut rng, 26.0, 48.0)).collect()
+}
+
+/// Moves the sky, one frame at a time. Everything it decides is `Sky`'s; this
+/// only reads the clock, reads the size of the window, and writes styles.
 #[cfg(target_arch = "wasm32")]
 pub fn animate() {
     use std::cell::RefCell;
@@ -344,26 +716,24 @@ pub fn animate() {
     }
 
     let Some(doc) = win.document() else { return };
-    let Ok(nodes) = doc.query_selector_all(".rock") else { return };
     let Ok(Some(hero)) = doc.query_selector(".hero") else { return };
 
-    let specs = rocks();
-    if nodes.length() as usize != specs.len() {
-        return;
+    fn collect(doc: &web_sys::Document, selector: &str, wanted: usize) -> Option<Vec<HtmlElement>> {
+        let nodes = doc.query_selector_all(selector).ok()?;
+        if nodes.length() as usize != wanted {
+            return None;
+        }
+        (0..wanted)
+            .map(|i| nodes.get(i as u32).and_then(|n| n.dyn_into::<HtmlElement>().ok()))
+            .collect()
     }
 
-    let mut bodies: Vec<(HtmlElement, Drift)> = Vec::with_capacity(specs.len());
-    for (i, spec) in specs.iter().enumerate() {
-        let Some(el) = nodes
-            .get(i as u32)
-            .and_then(|n| n.dyn_into::<HtmlElement>().ok())
-        else {
-            return;
-        };
-        bodies.push((el, Drift::new(spec)));
-    }
+    let sky = Sky::new();
+    let Some(rock_els) = collect(&doc, ".rock", sky.drifts.len()) else { return };
+    let Some(shard_els) = collect(&doc, ".shard", SHARD_POOL) else { return };
+    let Some(flash_els) = collect(&doc, ".flash", FLASH_POOL) else { return };
 
-    let bodies = Rc::new(RefCell::new(bodies));
+    let sky = Rc::new(RefCell::new(sky));
     let frame: Rc<RefCell<Option<Closure<dyn FnMut(f64)>>>> = Rc::new(RefCell::new(None));
     let next = frame.clone();
     let last = Rc::new(RefCell::new(f64::NAN));
@@ -391,11 +761,59 @@ pub fn animate() {
         let showing = win.scroll_y().unwrap_or(0.0) <= height;
 
         if width > 0.0 && showing {
-            for (el, drift) in bodies.borrow_mut().iter_mut() {
-                drift.step(secs, width, height);
-                let _ = el
-                    .style()
-                    .set_property("transform", &drift.transform(width, height));
+            let mut sky = sky.borrow_mut();
+            sky.step(secs, width, height);
+
+            for (el, drift) in rock_els.iter().zip(sky.drifts.iter()) {
+                let style = el.style();
+                if drift.present() {
+                    let _ = style.set_property("display", "block");
+                    let _ = style.set_property("transform", &drift.transform(width, height));
+                } else {
+                    let _ = style.set_property("display", "none");
+                }
+            }
+
+            for (el, shard) in shard_els.iter().zip(sky.shards.iter()) {
+                let style = el.style();
+                if shard.alive() {
+                    let _ = style.set_property("display", "block");
+                    let _ = style.set_property(
+                        "transform",
+                        &format!(
+                            "translate3d({:.1}px, {:.1}px, 0) rotate({:.1}deg)",
+                            shard.x - shard.size / 2.0,
+                            shard.y - shard.size / 2.0,
+                            shard.turned
+                        ),
+                    );
+                    let _ = style.set_property("width", &format!("{:.1}px", shard.size));
+                    let _ = style.set_property("height", &format!("{:.1}px", shard.size));
+                    let _ = style.set_property("opacity", &format!("{:.3}", shard.fade()));
+                } else {
+                    let _ = style.set_property("display", "none");
+                }
+            }
+
+            for (el, flash) in flash_els.iter().zip(sky.flashes.iter()) {
+                let style = el.style();
+                if flash.alive() {
+                    let _ = style.set_property("display", "block");
+                    let _ = style.set_property(
+                        "transform",
+                        &format!(
+                            "translate3d({:.1}px, {:.1}px, 0) scale({:.2})",
+                            flash.x - flash.size / 2.0,
+                            flash.y - flash.size / 2.0,
+                            flash.spread()
+                        ),
+                    );
+                    let _ = style.set_property("width", &format!("{:.1}px", flash.size));
+                    let _ = style.set_property("height", &format!("{:.1}px", flash.size));
+                    let _ = style.set_property("opacity", &format!("{:.3}", flash.fade()));
+                } else {
+                    let _ = style.set_property("display", "none");
+                }
             }
         }
 
@@ -415,6 +833,160 @@ pub fn animate() {
 /// Off the browser there is nothing to move.
 #[cfg(not(target_arch = "wasm32"))]
 pub fn animate() {}
+
+#[cfg(test)]
+mod sky_tests {
+    use super::*;
+
+    const W: f64 = 1440.0;
+    const H: f64 = 820.0;
+
+    fn put(drift: &mut Drift, x: f64, y: f64, depth: Depth, size: f64) {
+        drift.placed = true;
+        drift.x = x;
+        drift.y = y;
+        drift.depth = depth;
+        drift.size = size;
+        drift.margin = size + 40.0;
+        drift.vx = 0.0;
+        drift.vy = 0.0;
+        drift.gone_for = 0.0;
+    }
+
+    /// Everything spread out on a grid and too small to touch, so a test can
+    /// then place the two it cares about.
+    fn quiet_sky() -> Sky {
+        let mut sky = Sky::new();
+        for (i, drift) in sky.drifts.iter_mut().enumerate() {
+            let x = 50.0 + (i % 6) as f64 * 200.0;
+            let y = 50.0 + (i / 6) as f64 * 200.0;
+            put(drift, x, y, Depth::Far, 4.0);
+        }
+        sky
+    }
+
+    fn alive_shards(sky: &Sky) -> usize {
+        sky.shards.iter().filter(|s| s.alive()).count()
+    }
+
+    #[test]
+    fn nothing_happens_in_a_quiet_sky() {
+        let mut sky = quiet_sky();
+        sky.step(0.016, W, H);
+        assert_eq!(alive_shards(&sky), 0);
+        assert!(sky.drifts.iter().all(|d| d.present()));
+    }
+
+    #[test]
+    fn two_rocks_that_meet_come_apart() {
+        let mut sky = quiet_sky();
+        put(&mut sky.drifts[0], 400.0, 400.0, Depth::Near, 100.0);
+        put(&mut sky.drifts[1], 420.0, 400.0, Depth::Near, 100.0);
+
+        sky.step(0.016, W, H);
+
+        assert!(!sky.drifts[0].present(), "the first one is still here");
+        assert!(!sky.drifts[1].present(), "the second one is still here");
+        assert_eq!(alive_shards(&sky), SHARDS_PER_ROCK * 2);
+        assert_eq!(sky.flashes.iter().filter(|f| f.alive()).count(), 1);
+    }
+
+    /// A speck far away and a boulder close up are nowhere near each other,
+    /// whatever the screen says.
+    #[test]
+    fn rocks_at_different_distances_pass_through_each_other() {
+        let mut sky = quiet_sky();
+        put(&mut sky.drifts[0], 400.0, 400.0, Depth::Near, 100.0);
+        put(&mut sky.drifts[1], 420.0, 400.0, Depth::Middle, 100.0);
+
+        sky.step(0.016, W, H);
+
+        assert!(sky.drifts[0].present());
+        assert!(sky.drifts[1].present());
+        assert_eq!(alive_shards(&sky), 0);
+    }
+
+    /// Touching is edge to edge, not centre to centre.
+    #[test]
+    fn rocks_that_only_nearly_meet_do_not() {
+        let mut sky = quiet_sky();
+        // Reaches are 46 each, so 93 apart is clear by a whisker.
+        put(&mut sky.drifts[0], 400.0, 400.0, Depth::Near, 100.0);
+        put(&mut sky.drifts[1], 493.0, 400.0, Depth::Near, 100.0);
+
+        sky.step(0.016, W, H);
+
+        assert!(sky.drifts[0].present(), "they were not touching");
+        assert_eq!(alive_shards(&sky), 0);
+    }
+
+    #[test]
+    fn what_came_apart_comes_back_from_an_edge() {
+        let mut sky = quiet_sky();
+        put(&mut sky.drifts[0], 400.0, 400.0, Depth::Near, 100.0);
+        put(&mut sky.drifts[1], 420.0, 400.0, Depth::Near, 100.0);
+        sky.step(0.016, W, H);
+        assert!(!sky.drifts[0].present());
+
+        for _ in 0..((GONE_FOR / 0.016) as usize + 4) {
+            sky.step(0.016, W, H);
+        }
+
+        assert!(sky.drifts[0].present(), "it never came back");
+        let (cx, cy) = sky.drifts[0].centre();
+        let out = cx < 0.0 || cx > W || cy < 0.0 || cy > H;
+        assert!(out, "it came back at {cx},{cy}, which is in plain view");
+    }
+
+    #[test]
+    fn the_pieces_do_not_last() {
+        let mut sky = quiet_sky();
+        put(&mut sky.drifts[0], 400.0, 400.0, Depth::Near, 100.0);
+        put(&mut sky.drifts[1], 420.0, 400.0, Depth::Near, 100.0);
+        sky.step(0.016, W, H);
+        assert!(alive_shards(&sky) > 0);
+
+        for _ in 0..120 {
+            sky.step(0.016, W, H);
+        }
+        assert_eq!(alive_shards(&sky), 0, "something is still in the air");
+        assert!(sky.flashes.iter().all(|f| !f.alive()));
+    }
+
+    /// A piece thrown outwards leaves, and fades as it goes.
+    #[test]
+    fn a_piece_leaves_and_fades() {
+        let mut sky = quiet_sky();
+        put(&mut sky.drifts[0], 400.0, 400.0, Depth::Near, 100.0);
+        put(&mut sky.drifts[1], 420.0, 400.0, Depth::Near, 100.0);
+        sky.step(0.016, W, H);
+
+        let (sx, sy) = {
+            let s = sky.shards.iter().find(|s| s.alive()).unwrap();
+            (s.x, s.y)
+        };
+        let before = sky.shards.iter().find(|s| s.alive()).unwrap().fade();
+
+        for _ in 0..20 {
+            sky.step(0.016, W, H);
+        }
+
+        let s = sky.shards.iter().find(|s| s.alive()).expect("all gone too soon");
+        assert!((s.x - sx).abs() + (s.y - sy).abs() > 1.0, "it never moved");
+        assert!(s.fade() < before, "it never faded");
+    }
+
+    /// More collisions than there are pieces must not panic or overrun.
+    #[test]
+    fn the_pool_holds_when_everything_meets_at_once() {
+        let mut sky = quiet_sky();
+        for i in 0..sky.drifts.len() {
+            put(&mut sky.drifts[i], 400.0, 400.0, Depth::Near, 100.0);
+        }
+        sky.step(0.016, W, H);
+        assert!(alive_shards(&sky) <= SHARD_POOL);
+    }
+}
 
 #[cfg(test)]
 mod drift_tests {
@@ -449,7 +1021,6 @@ mod drift_tests {
         for _ in 0..10 {
             d.step(0.1, W, H);
         }
-        // One second at 20 across and 8 up.
         assert!((d.x - (0.5 * W + 20.0)).abs() < 1e-6, "x was {}", d.x);
         assert!((d.y - (0.5 * H - 8.0)).abs() < 1e-6, "y was {}", d.y);
     }
@@ -459,18 +1030,15 @@ mod drift_tests {
     fn it_comes_back_around_the_far_side() {
         let mut d = one(400.0, 0.0, 95.0, 50.0);
         d.step(0.0, W, H);
-        let mut wrapped = false;
         for _ in 0..200 {
             let before = d.x;
             d.step(0.05, W, H);
             if d.x < before {
-                wrapped = true;
-                // It reappears off the left edge, not inside the frame.
                 assert!(d.x < 0.0, "reappeared at {}, which is on screen", d.x);
-                break;
+                return;
             }
         }
-        assert!(wrapped, "it never came back around");
+        panic!("it never came back around");
     }
 
     #[test]
@@ -499,5 +1067,49 @@ mod drift_tests {
         }
         assert!((coarse.x - fine.x).abs() < 1e-9);
         assert!((coarse.turned - fine.turned).abs() < 1e-9);
+    }
+}
+
+#[cfg(test)]
+mod frequency {
+    use super::*;
+
+    /// A collision nobody ever sees is a feature that is not there, and one
+    /// happening constantly is a mess. This runs the sky forward and counts, so
+    /// the rate is a measurement rather than a hope.
+    #[test]
+    fn how_often_two_rocks_meet() {
+        let (w, h) = (1440.0, 820.0);
+        let mut sky = Sky::new();
+        // Settle it first, so the count is of a sky in motion rather than of
+        // wherever the rocks happened to be drawn.
+        for _ in 0..600 {
+            sky.step(1.0 / 60.0, w, h);
+        }
+
+        let minutes = 5.0;
+        let frames = (minutes * 60.0 * 60.0) as usize;
+        let mut bursts = 0usize;
+        let mut gone = vec![false; sky.drifts.len()];
+
+        for _ in 0..frames {
+            sky.step(1.0 / 60.0, w, h);
+            for (i, drift) in sky.drifts.iter().enumerate() {
+                let now_gone = !drift.present();
+                if now_gone && !gone[i] {
+                    bursts += 1;
+                }
+                gone[i] = now_gone;
+            }
+        }
+
+        // Measured at 52 in five minutes, which is a collision about every
+        // eleven seconds. The band is wide because the exact figure is not the
+        // point — being seen at all, and not constantly, is.
+        assert!(
+            (12..=200).contains(&bursts),
+            "{bursts} rocks broke up in {minutes} minutes, which is either \
+             never or nonstop"
+        );
     }
 }

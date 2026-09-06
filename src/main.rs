@@ -79,6 +79,26 @@ fn Space() -> impl IntoView {
         })
         .collect_view();
 
+    // The pieces two rocks come apart into, and the light of the impact. Both
+    // are made once and then only moved, because a collision is no time to be
+    // building elements.
+    let shards = space::shard_shapes()
+        .into_iter()
+        .map(|points| {
+            view! {
+                <div class="shard">
+                    <svg viewBox="-50 -50 100 100" aria-hidden="true">
+                        <polygon points=points />
+                    </svg>
+                </div>
+            }
+        })
+        .collect_view();
+
+    let flashes = (0..space::FLASH_POOL)
+        .map(|_| view! { <div class="flash"></div> })
+        .collect_view();
+
     view! {
         <div class="space" aria-hidden="true">
             <svg class="space-defs" width="0" height="0">
@@ -99,6 +119,8 @@ fn Space() -> impl IntoView {
             </svg>
             <div class="stars">{stars}</div>
             <div class="rocks">{rocks}</div>
+            <div class="shards">{shards}</div>
+            <div class="flashes">{flashes}</div>
             <div class="scrim"></div>
         </div>
     }

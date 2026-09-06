@@ -188,7 +188,7 @@ body {
 .space { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .space-defs { position: absolute; width: 0; height: 0; }
 
-.stars, .rocks { position: absolute; inset: 0; }
+.stars, .rocks, .shards, .flashes { position: absolute; inset: 0; }
 
 .star {
   position: absolute;
@@ -220,6 +220,37 @@ body {
 .rock.far    { opacity: 0.5;  filter: blur(1.4px); }
 .rock.middle { opacity: 0.8;  filter: drop-shadow(0 0 9px rgba(62, 224, 138, 0.2)); }
 .rock.near   { opacity: 0.95; filter: drop-shadow(0 0 16px rgba(62, 224, 138, 0.26)); }
+
+/* What is left of two rocks that met. Hidden until there is something to
+ * show; the size, the place and the fading are all written from Rust. */
+.shard {
+  position: absolute;
+  display: none;
+  will-change: transform, opacity;
+}
+
+.shard svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+.shard polygon {
+  fill: #9dffcd;
+  stroke: rgba(230, 255, 242, 0.65);
+  stroke-width: 3;
+}
+
+/* The light of the impact, which is over before the pieces are. */
+.flash {
+  position: absolute;
+  display: none;
+  border-radius: 50%;
+  transform-origin: center;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    rgba(214, 255, 233, 0.9),
+    rgba(62, 224, 138, 0.42) 42%,
+    rgba(62, 224, 138, 0) 70%
+  );
+}
 
 /* The words sit on the left and want the dark; the bottom hands over to the
  * page. */
