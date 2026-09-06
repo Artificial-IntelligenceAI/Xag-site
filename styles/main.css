@@ -25,6 +25,11 @@
   --green-dim: rgba(62, 224, 138, 0.14);
   --green-line: rgba(62, 224, 138, 0.22);
 
+  /* Brighter than the body text, for the few things that want to stand out. */
+  --emph: #ffffff;
+  /* What is legible on top of an accent-coloured block. */
+  --on-accent: #04150c;
+
   --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
     "Liberation Mono", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
@@ -101,7 +106,7 @@ body {
   letter-spacing: 0.03em;
   font-weight: 500;
   margin: 0 0 1.25rem;
-  color: #fff;
+  color: var(--emph);
 }
 
 .tagline {
@@ -133,7 +138,7 @@ body {
 .cta {
   display: inline-block;
   background: var(--name);
-  color: #04150c;
+  color: var(--on-accent);
   font-weight: 600;
   font-size: 1rem;
   text-decoration: none;
@@ -650,7 +655,7 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
  * holding nothing. */
 @supports (color: color(display-p3 0 1 0)) {
   @media (color-gamut: p3) and (dynamic-range: high) {
-    :root:not([data-theme="solarized"]) {
+    :root:not([data-theme]) {
       /* The two marks, taken most of the way out. */
       --name: color(display-p3 0.12 1 0.46);
       --value: color(display-p3 1 0.66 0.13);
@@ -661,23 +666,23 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
 
     /* The rocks are the largest colour on the page, so this is where a wider
      * gamut is actually seen rather than merely used. */
-    :root:not([data-theme="solarized"]) .rock .body { stroke: color(display-p3 0.45 1 0.7 / 0.6); }
-    :root:not([data-theme="solarized"]) .rock .facet { fill: color(display-p3 0.7 1 0.86 / 0.3); }
+    :root:not([data-theme]) .rock .body { stroke: color(display-p3 0.45 1 0.7 / 0.6); }
+    :root:not([data-theme]) .rock .facet { fill: color(display-p3 0.7 1 0.86 / 0.3); }
     /* The stops live in the shared defs, which is a sibling of the rocks
      * rather than inside one — so they are reached from there. */
-    :root:not([data-theme="solarized"]) .space-defs .lit { stop-color: color(display-p3 0.2 1 0.55); }
-    :root:not([data-theme="solarized"]) .space-defs .dark { stop-color: color(display-p3 0.02 0.16 0.11); }
+    :root:not([data-theme]) .space-defs .lit { stop-color: color(display-p3 0.2 1 0.55); }
+    :root:not([data-theme]) .space-defs .dark { stop-color: color(display-p3 0.02 0.16 0.11); }
 
-    :root:not([data-theme="solarized"]) .rock.middle { filter: drop-shadow(0 0 11px color(display-p3 0.1 1 0.45 / 0.32)); }
-    :root:not([data-theme="solarized"]) .rock.near { filter: drop-shadow(0 0 20px color(display-p3 0.1 1 0.45 / 0.4)); }
+    :root:not([data-theme]) .rock.middle { filter: drop-shadow(0 0 11px color(display-p3 0.1 1 0.45 / 0.32)); }
+    :root:not([data-theme]) .rock.near { filter: drop-shadow(0 0 20px color(display-p3 0.1 1 0.45 / 0.4)); }
 
     /* An impact is the one thing here that should be hard to look at. */
-    :root:not([data-theme="solarized"]) .shard polygon {
+    :root:not([data-theme]) .shard polygon {
       fill: color(display-p3 0.55 1 0.75);
       stroke: color(display-p3 0.92 1 0.96 / 0.8);
     }
 
-    :root:not([data-theme="solarized"]) .flash {
+    :root:not([data-theme]) .flash {
       background: radial-gradient(
         circle,
         color(display-p3 0.88 1 0.94 / 0.98),
@@ -686,16 +691,16 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
       );
     }
 
-    :root:not([data-theme="solarized"]) .star { background: color(display-p3 0.9 1 0.95); }
+    :root:not([data-theme]) .star { background: color(display-p3 0.9 1 0.95); }
 
     /* A solid block of it, which is the easiest place of all to see. */
-    :root:not([data-theme="solarized"]) .cta { background: color(display-p3 0.12 1 0.46); color: color(display-p3 0.01 0.09 0.04); }
-    :root:not([data-theme="solarized"]) .cta:hover { box-shadow: 0 6px 32px color(display-p3 0.1 1 0.45 / 0.45); }
+    :root:not([data-theme]) .cta { background: color(display-p3 0.12 1 0.46); color: color(display-p3 0.01 0.09 0.04); }
+    :root:not([data-theme]) .cta:hover { box-shadow: 0 6px 32px color(display-p3 0.1 1 0.45 / 0.45); }
 
     /* The arrival is the brightest thing the site ever puts on screen, and on
      * a display with headroom it should be uncomfortable. White at the top of
      * P3, with the glow around it in the widest green there is. */
-    :root:not([data-theme="solarized"]) .warp-reveal {
+    :root:not([data-theme]) .warp-reveal {
       color: color(display-p3 1 1 1);
       text-shadow:
         0 0 22px color(display-p3 0.55 1 0.78 / 0.95),
@@ -703,15 +708,15 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
         0 0 140px color(display-p3 0.12 1 0.46 / 0.5);
     }
 
-    :root:not([data-theme="solarized"]) .warp-reveal .phrase {
+    :root:not([data-theme]) .warp-reveal .phrase {
       border-bottom-color: color(display-p3 0.35 1 0.65);
     }
 
-    :root:not([data-theme="solarized"]) .warp-reveal b {
+    :root:not([data-theme]) .warp-reveal b {
       color: color(display-p3 0.45 1 0.72);
     }
 
-    :root:not([data-theme="solarized"]) .streak {
+    :root:not([data-theme]) .streak {
       background: linear-gradient(
         90deg,
         color(display-p3 0.6 1 0.82 / 0),
@@ -719,7 +724,7 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
       );
     }
 
-    :root:not([data-theme="solarized"]) .scrim {
+    :root:not([data-theme]) .scrim {
       background:
         linear-gradient(90deg, var(--bg) 2%, rgba(4, 7, 10, 0.82) 20%,
           rgba(4, 7, 10, 0.34) 38%, rgba(4, 7, 10, 0) 56%),
@@ -734,9 +739,9 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
  * page is already correct without it. */
 @supports (dynamic-range-limit: no-limit) {
   @media (dynamic-range: high) {
-    :root:not([data-theme="solarized"]),
-    :root:not([data-theme="solarized"]) .warp,
-    :root:not([data-theme="solarized"]) .warp-reveal { dynamic-range-limit: no-limit; }
+    :root:not([data-theme]),
+    :root:not([data-theme]) .warp,
+    :root:not([data-theme]) .warp-reveal { dynamic-range-limit: no-limit; }
   }
 }
 
@@ -865,7 +870,7 @@ button.wordmark:focus-visible {
  *   base03 #002b36   base02 #073642   base01 #586e75   base00 #657b83
  *   base0  #839496   base1  #93a1a1   yellow #b58900   cyan   #2aa198
  */
-:root[data-theme="solarized"] {
+:root[data-theme^="solarized"] {
   --bg: #002b36;
   --bg-soft: #073642;
   --panel: #073642;
@@ -879,61 +884,89 @@ button.wordmark:focus-visible {
 
   --green-dim: rgba(42, 161, 152, 0.12);
   --green-line: rgba(88, 110, 117, 0.36);
+
+  --emph: #93a1a1;
+  --on-accent: #002b36;
+}
+
+/* The same sixteen the other way up. Only the six greys are exchanged — the
+ * accents are the same accents, which is the whole idea of Solarized. */
+:root[data-theme="solarized-light"] {
+  color-scheme: light;
+
+  --bg: #fdf6e3;
+  --bg-soft: #eee8d5;
+  --panel: #eee8d5;
+  --fg: #657b83;
+  --muted: #93a1a1;
+  --rule: rgba(147, 161, 161, 0.55);
+
+  --name: #2aa198;
+  --value: #b58900;
+
+  --green-dim: rgba(42, 161, 152, 0.1);
+  --green-line: rgba(147, 161, 161, 0.55);
+
+  --emph: #586e75;
+  --on-accent: #fdf6e3;
 }
 
 /* No sky. `space::pause` stops the frame loop as well; this is only so that
  * nothing is left on screen in the frame before it notices. */
-[data-theme="solarized"] .space { display: none; }
+[data-theme^="solarized"] .space { display: none; }
 
 /* And no warp. The name is rendered as plain text rather than a button in this
  * theme, so there is nothing to click; this is the belt to that pair of
  * braces. */
-[data-theme="solarized"] .warp { display: none !important; }
+[data-theme^="solarized"] .warp { display: none !important; }
 
 /* Emphasised text is base1, which is as bright as this palette goes. */
-[data-theme="solarized"] .hero h1 { color: #93a1a1; }
-[data-theme="solarized"] strong,
-[data-theme="solarized"] .marks-table strong { color: #93a1a1; }
+/* The chip is the one thing that names a dark colour outright, because on the
+ * alien theme it has stars behind it and wants to be part-transparent. */
+[data-theme^="solarized"] .hero .warning { background: var(--panel); }
+
+[data-theme^="solarized"] strong,
+[data-theme^="solarized"] .marks-table strong { color: var(--emph); }
 
 /* Flat. No blur behind anything, no light coming off anything. */
-[data-theme="solarized"] .card,
-[data-theme="solarized"] .dock,
-[data-theme="solarized"] .theme {
-  background: #073642;
+[data-theme^="solarized"] .card,
+[data-theme^="solarized"] .dock,
+[data-theme^="solarized"] .theme {
+  background: var(--panel);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
 }
 
-[data-theme="solarized"] .card:hover {
-  background: rgba(88, 110, 117, 0.2);
-  border-color: rgba(88, 110, 117, 0.6);
+[data-theme^="solarized"] .card:hover {
+  background: var(--bg-soft);
+  border-color: var(--muted);
   transform: none;
 }
 
-[data-theme="solarized"] .card:hover .card-arrow { transform: none; }
+[data-theme^="solarized"] .card:hover .card-arrow { transform: none; }
 
-[data-theme="solarized"] .cta {
-  background: #2aa198;
-  color: #002b36;
+[data-theme^="solarized"] .cta {
+  background: var(--name);
+  color: var(--on-accent);
   box-shadow: none;
 }
 
-[data-theme="solarized"] .cta:hover { box-shadow: none; transform: none; }
+[data-theme^="solarized"] .cta:hover { box-shadow: none; transform: none; }
 
-[data-theme="solarized"] .dock-item.here {
-  background: rgba(42, 161, 152, 0.16);
-  color: #2aa198;
+[data-theme^="solarized"] .dock-item.here {
+  background: var(--green-dim);
+  color: var(--name);
 }
 
-[data-theme="solarized"] button.dock-item:hover {
-  background: rgba(88, 110, 117, 0.2);
-  color: #93a1a1;
+[data-theme^="solarized"] button.dock-item:hover {
+  background: var(--bg-soft);
+  color: var(--emph);
 }
 
-[data-theme="solarized"] .dock-item.waiting {
-  color: rgba(88, 110, 117, 0.55);
-  text-decoration-color: rgba(88, 110, 117, 0.4);
+[data-theme^="solarized"] .dock-item.waiting {
+  color: var(--muted);
+  text-decoration-color: var(--rule);
 }
 
 /* ══════════════ the theme switch ══════════════ */
@@ -943,27 +976,55 @@ button.wordmark:focus-visible {
   top: 1.25rem;
   right: 1.25rem;
   z-index: 7;
-  padding: 0.5rem 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.5rem 0.4rem 0.9rem;
   border-radius: 999px;
   border: 1px solid var(--rule);
   background: rgba(7, 18, 14, 0.78);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  color: var(--muted);
   font-family: var(--mono);
   font-size: 0.7rem;
   letter-spacing: 0.02em;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 
-.theme:hover { color: var(--fg); border-color: var(--green-line); }
-.theme.on { color: var(--name); border-color: var(--name); }
+.theme:hover { border-color: var(--green-line); }
 
-.theme:focus-visible {
+.theme label { color: var(--muted); cursor: default; }
+
+/* A real select: it opens where the platform says it should, works from the
+ * keyboard without being taught how, and is a wheel nobody needs to reinvent. */
+.theme select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.25rem 1.6rem 0.25rem 0.7rem;
+  background: var(--green-dim);
+  color: var(--name);
+  font: inherit;
+  cursor: pointer;
+  /* The arrow, drawn rather than fetched. */
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 0.85rem) 55%, calc(100% - 0.6rem) 55%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.theme select:focus-visible {
   outline: 2px solid var(--name);
   outline-offset: 2px;
 }
+
+/* The open list is drawn by the platform, so it is told the colours rather
+ * than styled. */
+.theme option { background: var(--bg); color: var(--fg); }
+
+[data-theme^="solarized"] .theme select { background: var(--green-dim); }
 
 @media (max-width: 40rem) {
   .theme { top: 0.75rem; right: 0.75rem; font-size: 0.65rem; padding: 0.4rem 0.7rem; }

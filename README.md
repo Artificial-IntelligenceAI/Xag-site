@@ -73,10 +73,18 @@ Every place on the site has one, and it carries the theme as well as the page:
 /alien/credits#license  and a section within it
 ```
 
-`alien` is the site's own look; `lite` is Solarized with the sky, the
-simulation and the wider gamut all switched off. An address that names no
-theme — `/philosophy` — uses whichever was chosen last and then rewrites
-itself to say so, so what is in the bar is always the whole instruction.
+`alien` is the site's own look. `lite` and `lite2` are Solarized Dark and
+Solarized Light, both with the sky, the simulation and the wider gamut
+switched off — lite is the honest name for what they are. An address that
+names no theme — `/philosophy` — uses whichever was chosen last and then
+rewrites itself to say so, so what is in the bar is always the whole
+instruction.
+
+Solarized Light is Ethan Schoonover's palette as specified, which means its
+contrast is his and not WCAG's: body text lands at 4.13:1 against base3 where
+AA asks for 4.5:1, and the accents are lower still. Taking body text down to
+base01 would pass and would stay inside the palette, but it would no longer be
+the thing it is named after.
 
 Any path serves `index.html` and the app reads it from there, which is what
 `_redirects` is for. A host that does not honour it will 404 on everything but

@@ -8,42 +8,57 @@
 //! to strip: everything after it reads the same whichever theme is in front.
 //! Nothing here touches the browser, so all of it can be checked.
 
-/// The two ways the site can look.
+/// The ways the site can look.
 ///
-/// `lite` is the honest name for the second one: no sky, no wider gamut, no
-/// simulation running behind anything — Solarized and nothing else.
+/// `lite` is the honest name for the pair of them: no sky, no wider gamut, no
+/// simulation running behind anything — Solarized and nothing else. The site's
+/// own look is the alien one, which is what the name turns out to stand for.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Theme {
     Alien,
     Lite,
+    Lite2,
 }
+
+pub const THEMES: [Theme; 3] = [Theme::Alien, Theme::Lite, Theme::Lite2];
 
 impl Theme {
     pub fn slug(self) -> &'static str {
         match self {
             Theme::Alien => "alien",
             Theme::Lite => "lite",
+            Theme::Lite2 => "lite2",
+        }
+    }
+
+    /// What it is called where a reader has to pick one.
+    pub fn label(self) -> &'static str {
+        match self {
+            Theme::Alien => "Alien",
+            Theme::Lite => "Solarized Dark",
+            Theme::Lite2 => "Solarized Light",
+        }
+    }
+
+    /// What goes on the document. The alien one is the absence of an answer,
+    /// which is what lets the stylesheet say "no theme asked for" with
+    /// `:not([data-theme])` rather than listing everything it is not.
+    pub fn attribute(self) -> Option<&'static str> {
+        match self {
+            Theme::Alien => None,
+            Theme::Lite => Some("solarized"),
+            Theme::Lite2 => Some("solarized-light"),
         }
     }
 
     pub fn from_slug(slug: &str) -> Option<Self> {
-        match slug {
-            "alien" => Some(Theme::Alien),
-            "lite" => Some(Theme::Lite),
-            _ => None,
-        }
+        THEMES.into_iter().find(|t| t.slug() == slug)
     }
 
-    pub fn is_lite(self) -> bool {
-        matches!(self, Theme::Lite)
-    }
-
-    pub fn of(lite: bool) -> Self {
-        if lite {
-            Theme::Lite
-        } else {
-            Theme::Alien
-        }
+    /// Either Solarized. Both stop the sky and both leave the wider gamut
+    /// alone; only the ground under them differs.
+    pub fn is_solarized(self) -> bool {
+        !matches!(self, Theme::Alien)
     }
 }
 
@@ -98,6 +113,33 @@ mod tests {
     fn a_theme_on_its_own_is_the_front_page_in_that_theme() {
         assert_eq!(split("/alien"), (Some(Theme::Alien), String::new()));
         assert_eq!(split("/lite"), (Some(Theme::Lite), String::new()));
+        assert_eq!(split("/lite2"), (Some(Theme::Lite2), String::new()));
+    }
+
+    /// `lite` must not swallow `lite2`, which a prefix match would.
+    #[test]
+    fn the_two_lite_themes_are_told_apart() {
+        assert_eq!(Theme::from_slug("lite"), Some(Theme::Lite));
+        assert_eq!(Theme::from_slug("lite2"), Some(Theme::Lite2));
+        assert_eq!(Theme::from_slug("lite3"), None);
+        assert_eq!(split("/lite2/credits"), (Some(Theme::Lite2), "credits".into()));
+    }
+
+    /// Every theme has a slug of its own, and only the alien one is the
+    /// absence of an attribute.
+    #[test]
+    fn each_theme_is_distinct() {
+        let slugs: Vec<_> = THEMES.iter().map(|t| t.slug()).collect();
+        let mut sorted = slugs.clone();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted.len(), slugs.len(), "two themes share a slug");
+        assert_eq!(
+            THEMES.iter().filter(|t| t.attribute().is_none()).count(),
+            1,
+            "exactly one theme is the default"
+        );
+        assert!(THEMES.iter().filter(|t| t.is_solarized()).count() == 2);
     }
 
     #[test]
@@ -131,7 +173,7 @@ mod tests {
     /// What is built has to come back apart into what built it.
     #[test]
     fn a_built_address_reads_back_the_same() {
-        for theme in [Theme::Alien, Theme::Lite] {
+        for theme in THEMES {
             for page in ["", "philosophy", "credits"] {
                 let (read_theme, read_page) = split(&build(theme, page, None));
                 assert_eq!(read_theme, Some(theme));

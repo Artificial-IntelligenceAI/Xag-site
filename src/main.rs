@@ -170,14 +170,14 @@ fn Card(
     page: Page,
     anchor: &'static str,
     set_page: WriteSignal<Page>,
-    lite: ReadSignal<bool>,
+    theme: ReadSignal<route::Theme>,
 ) -> impl IntoView {
     view! {
         <button
             class="card"
             on:click=move |_| {
                 set_page.set(page);
-                write_address(lite.get_untracked(), page, Some(anchor), true);
+                write_address(theme.get_untracked(), page, Some(anchor), true);
                 go_to(anchor);
             }
         >
@@ -268,11 +268,11 @@ fn place_now() -> (Option<route::Theme>, Page) {
 /// Writes the address. A page is somewhere you went, so it goes in the
 /// history and Back undoes it; a theme is how you are reading, so it replaces
 /// what is there rather than filling the history with palette changes.
-fn write_address(lite: bool, page: Page, anchor: Option<&str>, went: bool) {
+fn write_address(theme: route::Theme, page: Page, anchor: Option<&str>, went: bool) {
     let Some(history) = web_sys::window().and_then(|w| w.history().ok()) else {
         return;
     };
-    let url = route::build(route::Theme::of(lite), page.slug(), anchor);
+    let url = route::build(theme, page.slug(), anchor);
     let nothing = wasm_bindgen::JsValue::NULL;
     let _ = if went {
         history.push_state_with_url(&nothing, "", Some(&url))
@@ -282,7 +282,7 @@ fn write_address(lite: bool, page: Page, anchor: Option<&str>, went: bool) {
 }
 
 /// Back and Forward have to work, or the address bar is decoration.
-fn follow_history(set_page: WriteSignal<Page>, set_lite: WriteSignal<bool>) {
+fn follow_history(set_page: WriteSignal<Page>, set_theme: WriteSignal<route::Theme>) {
     use wasm_bindgen::closure::Closure;
     use wasm_bindgen::JsCast;
 
@@ -291,7 +291,7 @@ fn follow_history(set_page: WriteSignal<Page>, set_lite: WriteSignal<bool>) {
     let on_pop = Closure::wrap(Box::new(move |_: web_sys::PopStateEvent| {
         let (theme, page) = place_now();
         if let Some(theme) = theme {
-            set_lite.set(theme.is_lite());
+            set_theme.set(theme);
         }
         set_page.set(page);
     }) as Box<dyn FnMut(web_sys::PopStateEvent)>);
@@ -303,11 +303,12 @@ fn follow_history(set_page: WriteSignal<Page>, set_lite: WriteSignal<bool>) {
 /// Where the reader's choice of theme is kept between visits.
 const THEME_KEY: &str = "xag.theme";
 
-fn stored_solarized() -> bool {
+fn stored_theme() -> route::Theme {
     web_sys::window()
         .and_then(|w| w.local_storage().ok().flatten())
         .and_then(|store| store.get_item(THEME_KEY).ok().flatten())
-        .is_some_and(|v| v == "solarized")
+        .and_then(|v| route::Theme::from_slug(&v))
+        .unwrap_or(route::Theme::Alien)
 }
 
 /// Puts the theme on the document, remembers it, and starts or stops the sky.
@@ -316,23 +317,26 @@ fn stored_solarized() -> bool {
 /// for it is to get it rather than to get this site wearing it. So the sky
 /// stops, the wider gamut is switched off in the stylesheet, and what is left
 /// is sixteen colours on a flat ground.
-fn apply_theme(solarized: bool) {
+fn apply_theme(theme: route::Theme) {
     if let Some(root) = web_sys::window()
         .and_then(|w| w.document())
         .and_then(|d| d.document_element())
     {
-        if solarized {
-            let _ = root.set_attribute("data-theme", "solarized");
-        } else {
-            let _ = root.remove_attribute("data-theme");
+        match theme.attribute() {
+            Some(name) => {
+                let _ = root.set_attribute("data-theme", name);
+            }
+            None => {
+                let _ = root.remove_attribute("data-theme");
+            }
         }
     }
 
     if let Some(store) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) {
-        let _ = store.set_item(THEME_KEY, if solarized { "solarized" } else { "xag" });
+        let _ = store.set_item(THEME_KEY, theme.slug());
     }
 
-    if solarized {
+    if theme.is_solarized() {
         space::pause();
     } else {
         space::resume();
@@ -340,17 +344,32 @@ fn apply_theme(solarized: bool) {
 }
 
 #[component]
-fn ThemeToggle(solarized: ReadSignal<bool>, set_solarized: WriteSignal<bool>) -> impl IntoView {
+fn ThemePicker(theme: ReadSignal<route::Theme>, set_theme: WriteSignal<route::Theme>) -> impl IntoView {
+    let options = route::THEMES
+        .iter()
+        .map(|&t| {
+            view! {
+                <option value=t.slug() selected=move || theme.get() == t>
+                    {t.label()}
+                </option>
+            }
+        })
+        .collect_view();
+
     view! {
-        <button
-            class="theme"
-            class:on=move || solarized.get()
-            aria-pressed=move || solarized.get().to_string()
-            title="Solarized Dark: no sky, no wide gamut, sixteen colours"
-            on:click=move |_| set_solarized.update(|v| *v = !*v)
-        >
-            "Solarized Dark"
-        </button>
+        <div class="theme">
+            <label for="theme-pick">"Theme"</label>
+            <select
+                id="theme-pick"
+                on:change=move |ev| {
+                    if let Some(picked) = route::Theme::from_slug(&event_target_value(&ev)) {
+                        set_theme.set(picked);
+                    }
+                }
+            >
+                {options}
+            </select>
+        </div>
     }
 }
 
@@ -425,7 +444,7 @@ impl Page {
 fn Dock(
     page: ReadSignal<Page>,
     set_page: WriteSignal<Page>,
-    lite: ReadSignal<bool>,
+    theme: ReadSignal<route::Theme>,
 ) -> impl IntoView {
     let items = PAGES
         .iter()
@@ -438,7 +457,7 @@ fn Dock(
                         aria-current=move || if page.get() == p { "page" } else { "false" }
                         on:click=move |_| {
                             set_page.set(p);
-                            write_address(lite.get_untracked(), p, None, true);
+                            write_address(theme.get_untracked(), p, None, true);
                             // A new page starts at its top, not wherever the
                             // last one had been scrolled to.
                             if let Some(win) = web_sys::window() {
@@ -736,30 +755,31 @@ fn App() -> impl IntoView {
     // The address decides where this starts. If it names a theme that wins;
     // if it does not, the reader's last choice does.
     let (named_theme, opened_at) = place_now();
-    let starts_lite = named_theme.map_or_else(stored_solarized, |t| t.is_lite());
+    let starts_as = named_theme.unwrap_or_else(stored_theme);
 
     let (page, set_page) = signal(opened_at);
     let at_home = move || page.get() == Page::Home;
 
-    let (solarized, set_solarized) = signal(starts_lite);
+    let (theme, set_theme) = signal(starts_as);
+    let alien = move || theme.get() == route::Theme::Alien;
 
     // Whatever the address said or left out, it says all of it from here on —
     // replacing rather than pushing, so arriving does not leave a step behind
     // it that Back would walk into.
-    write_address(starts_lite, opened_at, None, false);
-    follow_history(set_page, set_solarized);
+    write_address(starts_as, opened_at, None, false);
+    follow_history(set_page, set_theme);
 
     // Runs on mount as well as on every change, so a reader who chose Solarized
     // last time arrives in it rather than watching it swap over. Closing the
     // warp is part of it: the name does not stand for anything in a palette
     // somebody else designed.
     Effect::new(move |_| {
-        let on = solarized.get();
-        apply_theme(on);
-        if on {
+        let now = theme.get();
+        apply_theme(now);
+        if now.is_solarized() {
             warp::close();
         }
-        write_address(on, page.get_untracked(), None, false);
+        write_address(now, page.get_untracked(), None, false);
     });
 
     view! {
@@ -768,7 +788,7 @@ fn App() -> impl IntoView {
             <div class="hero-inner">
                 <div class="hero-words">
                     <h1>
-                        {move || if solarized.get() {
+                        {move || if !alien() {
                             view! { <span class="wordmark">"Xag"</span> }.into_any()
                         } else {
                             view! {
@@ -795,21 +815,21 @@ fn App() -> impl IntoView {
                 {move || at_home().then(|| view! {
                     <nav class="cards" aria-label="Jump to">
                         <Card label="Two marks" icon="\'*"
-                              page=Page::Philosophy anchor="marks" set_page=set_page lite=solarized />
+                              page=Page::Philosophy anchor="marks" set_page=set_page theme=theme />
                         <Card label="Ownership" icon="→"
-                              page=Page::Home anchor="ownership" set_page=set_page lite=solarized />
+                              page=Page::Home anchor="ownership" set_page=set_page theme=theme />
                         <Card label="Error messages" icon="^^"
-                              page=Page::Home anchor="errors" set_page=set_page lite=solarized />
+                              page=Page::Home anchor="errors" set_page=set_page theme=theme />
                         <Card label="Three engines" icon="≡"
-                              page=Page::Philosophy anchor="engines" set_page=set_page lite=solarized />
+                              page=Page::Philosophy anchor="engines" set_page=set_page theme=theme />
                         <Card label="Build from source" icon=">_"
-                              page=Page::Home anchor="building" set_page=set_page lite=solarized />
+                              page=Page::Home anchor="building" set_page=set_page theme=theme />
                     </nav>
                 })}
             </div>
         </header>
 
-        <ThemeToggle solarized=solarized set_solarized=set_solarized />
+        <ThemePicker theme=theme set_theme=set_theme />
         <WarpOverlay />
 
         <p class="vertical-note">
@@ -826,7 +846,7 @@ fn App() -> impl IntoView {
             }}
         </main>
 
-        <Dock page=page set_page=set_page lite=solarized />
+        <Dock page=page set_page=set_page theme=theme />
     }
 }
 
