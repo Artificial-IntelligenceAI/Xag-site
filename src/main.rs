@@ -5,6 +5,7 @@
 //! message is the one `xagc check` actually printed. Nothing on this page
 //! describes a language feature that was not exercised first.
 
+mod ambience;
 mod space;
 mod syntax;
 
@@ -104,6 +105,35 @@ fn Space() -> impl IntoView {
     }
 }
 
+/// Turns the ambience on and off.
+///
+/// It starts off, and it starts off on purpose. A page that makes noise at
+/// somebody who did not ask for it is a page they close — and audio that runs
+/// for more than three seconds without a way to stop it fails WCAG 1.4.2. The
+/// browser would refuse to autoplay this anyway, and the browser is right.
+#[component]
+fn SoundToggle() -> impl IntoView {
+    let (playing, set_playing) = signal(false);
+
+    view! {
+        <button
+            class="sound"
+            class:on=move || playing.get()
+            aria-pressed=move || playing.get().to_string()
+            on:click=move |_| {
+                let next = !playing.get();
+                set_playing.set(next);
+                // Made here, inside the click, because a browser will not let a
+                // page open an audio context any other way.
+                if next { ambience::start() } else { ambience::stop() }
+            }
+        >
+            <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+            {move || if playing.get() { "ambience on" } else { "ambience off" }}
+        </button>
+    }
+}
+
 /// One of the cards down the right of the hero.
 #[component]
 fn Card(href: &'static str, label: &'static str, icon: &'static str) -> impl IntoView {
@@ -175,6 +205,8 @@ fn Marks() -> impl IntoView {
 fn App() -> impl IntoView {
     view! {
         <Hero />
+
+        <SoundToggle />
 
         <p class="vertical-note">
             "Everything on this website is WASM via Rust where possible"
