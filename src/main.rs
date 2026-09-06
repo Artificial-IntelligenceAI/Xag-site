@@ -157,38 +157,6 @@ fn Marks() -> impl IntoView {
     }
 }
 
-/// One of the blocks down the right of the hero.
-///
-/// A card knows which page its section is on, which the dock does not have to:
-/// two of these land on Design Philosophy and three on Home, and the reader is
-/// not asked to know which.
-#[component]
-fn Card(
-    label: &'static str,
-    icon: &'static str,
-    page: Page,
-    anchor: &'static str,
-    set_page: WriteSignal<Page>,
-    theme: ReadSignal<route::Theme>,
-) -> impl IntoView {
-    view! {
-        <button
-            class="card"
-            on:click=move |_| {
-                set_page.set(page);
-                write_address(theme.get_untracked(), page, Some(anchor), true);
-                go_to(anchor);
-            }
-        >
-            <span class="card-icon" aria-hidden="true">{icon}</span>
-            <span class="card-label">{label}</span>
-            <svg class="card-arrow" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 12h15M13 6l6 6-6 6" />
-            </svg>
-        </button>
-    }
-}
-
 /// Scrolls to a section once the page holding it is in the document.
 ///
 /// Two cases, and they need different things. A card pointing at the page the
@@ -650,7 +618,7 @@ fn App() -> impl IntoView {
                 </div>
 
                 {move || at_home().then(|| view! {
-                    <nav class="cards" aria-label="Questions and sections">
+                    <nav class="cards" aria-label="Questions">
                         {content::QUESTIONS.iter().map(|q| view! {
                             <button
                                 class="card asks"
@@ -667,16 +635,6 @@ fn App() -> impl IntoView {
                                 </svg>
                             </button>
                         }).collect_view()}
-                        <Card label="Two marks" icon="\'*"
-                              page=Page::Philosophy anchor="marks" set_page=set_page theme=theme />
-                        <Card label="Ownership" icon="→"
-                              page=Page::Home anchor="ownership" set_page=set_page theme=theme />
-                        <Card label="Error messages" icon="^^"
-                              page=Page::Home anchor="errors" set_page=set_page theme=theme />
-                        <Card label="Three engines" icon="≡"
-                              page=Page::Philosophy anchor="engines" set_page=set_page theme=theme />
-                        <Card label="Build from source" icon=">_"
-                              page=Page::Home anchor="building" set_page=set_page theme=theme />
                     </nav>
                 })}
             </div>

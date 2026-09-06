@@ -405,15 +405,11 @@ pub struct Question {
 pub const QUESTIONS: [Question; 1] = [Question {
     id: "only-positives",
     asked: "I've seen languages with only positives. No negatives.",
-    short: "They have them. They did not write them down.",
+    short: "They most likely have flaws, but weren't written down.",
     answer: &[
-        "Every language costs something — in what it refuses, in what it makes \
-         you say out loud, in what it makes you wait for. A page listing only \
-         what a language gives you is not describing a language without costs. \
-         It is describing one whose costs you meet later, in your own code, \
-         where they are expensive to find.",
-        "Xag's three are on the front page, in red, above the button. They are \
-         not all of them — they are the ones known well enough to write down.",
+        "To be honest too, we didn't write down all flaws of Xag, but we did \
+         write down the most major. At least we wrote them down. We don't want \
+         you to regret our language.",
     ],
 }];
 
@@ -470,17 +466,29 @@ mod tests {
         }
     }
 
-    /// A card or a link pointing at a section that is not there would scroll
-    /// nowhere, and nothing else would notice.
+    /// A card pointing at an answer that is not there would scroll nowhere, and
+    /// nothing else would notice. Every question is somewhere to land, and no
+    /// two of them are the same somewhere.
     #[test]
-    fn the_sections_the_cards_point_at_exist() {
-        let ids: Vec<&str> = PAGES
+    fn every_question_is_somewhere_to_land() {
+        let mut ids: Vec<&str> = QUESTIONS.iter().map(|q| q.id).collect();
+        assert!(ids.iter().all(|id| !id.is_empty()), "a question has no address");
+        let count = ids.len();
+        ids.sort_unstable();
+        ids.dedup();
+        assert_eq!(ids.len(), count, "two questions share an address");
+    }
+
+    /// The questions are shown by a section on the front page; without it the
+    /// answers exist and are on no page.
+    #[test]
+    fn the_questions_are_on_a_page() {
+        let shown = PAGES
             .iter()
-            .flat_map(|p| p.sections.iter().map(|s| s.id))
-            .collect();
-        for wanted in ["marks", "ownership", "errors", "engines", "building"] {
-            assert!(ids.contains(&wanted), "no section with id {wanted}");
-        }
+            .flat_map(|p| p.sections.iter())
+            .flat_map(|s| s.blocks.iter())
+            .any(|b| matches!(b, Block::Questions));
+        assert!(shown, "nothing renders the questions");
     }
 
     #[test]
