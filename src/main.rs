@@ -303,12 +303,20 @@ fn follow_history(set_page: WriteSignal<Page>, set_theme: WriteSignal<route::The
 /// Where the reader's choice of theme is kept between visits.
 const THEME_KEY: &str = "xag.theme";
 
-fn stored_theme() -> route::Theme {
+/// What the reader chose last time, if they have been here before.
+fn stored_theme() -> Option<route::Theme> {
     web_sys::window()
         .and_then(|w| w.local_storage().ok().flatten())
         .and_then(|store| store.get_item(THEME_KEY).ok().flatten())
         .and_then(|v| route::Theme::from_slug(&v))
-        .unwrap_or(route::Theme::Alien)
+}
+
+/// Which theme a first visit opens in, which is the domain's business.
+fn theme_for_host() -> route::Theme {
+    let host = web_sys::window()
+        .and_then(|w| w.location().hostname().ok())
+        .unwrap_or_default();
+    route::default_theme(&host)
 }
 
 /// Puts the theme on the document, remembers it, and starts or stops the sky.
@@ -762,7 +770,11 @@ fn App() -> impl IntoView {
     // The address decides where this starts. If it names a theme that wins;
     // if it does not, the reader's last choice does.
     let (named_theme, opened_at) = place_now();
-    let starts_as = named_theme.unwrap_or_else(stored_theme);
+    // The address wins if it names a theme, then what the reader chose last
+    // time, then the domain they came in on.
+    let starts_as = named_theme
+        .or_else(stored_theme)
+        .unwrap_or_else(theme_for_host);
 
     let (page, set_page) = signal(opened_at);
     let at_home = move || page.get() == Page::Home;
@@ -816,7 +828,10 @@ fn App() -> impl IntoView {
                         <span>"Excellent Runtime Performance"</span>
                         <span>"Slow Compilation Time"</span>
                     </p>
-                    <p class="warning">"Early work in progress — nothing here is stable yet."</p>
+                    <p class="warning">
+                        "Under development, don't treat this website's info as "
+                        <a href=REPO>"truth"</a>"."
+                    </p>
                     <a class="cta" href="#building">"Build from source"</a>
                 </div>
 

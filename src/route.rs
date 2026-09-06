@@ -72,6 +72,20 @@ impl Theme {
     }
 }
 
+/// Which theme a host arrives in when nothing else has said.
+///
+/// The two domains are the same site, but `.org` opens in silver and `.com` in
+/// alien. It is only a default: an address that names a theme wins, and so does
+/// a choice the reader has made before.
+pub fn default_theme(host: &str) -> Theme {
+    let host = host.trim().trim_end_matches('.').to_ascii_lowercase();
+    if host == "org" || host.ends_with(".org") {
+        Theme::Silver
+    } else {
+        Theme::Alien
+    }
+}
+
 /// Pulls an address apart into the theme it names, if it names one, and the
 /// page slug that follows.
 ///
@@ -171,6 +185,30 @@ mod tests {
     fn extra_slashes_are_not_an_error() {
         assert_eq!(split("/lite/philosophy/"), (Some(Theme::Lite), "philosophy".into()));
         assert_eq!(split("//alien//credits//"), (Some(Theme::Alien), "credits".into()));
+    }
+
+    #[test]
+    fn org_opens_in_silver_and_everything_else_in_alien() {
+        assert_eq!(default_theme("xag-lang.org"), Theme::Silver);
+        assert_eq!(default_theme("www.xag-lang.org"), Theme::Silver);
+        assert_eq!(default_theme("XAG-LANG.ORG"), Theme::Silver);
+        // A trailing dot is a fully qualified name, and still that host.
+        assert_eq!(default_theme("xag-lang.org."), Theme::Silver);
+
+        assert_eq!(default_theme("xag-lang.com"), Theme::Alien);
+        assert_eq!(default_theme("www.xag-lang.com"), Theme::Alien);
+        assert_eq!(default_theme("localhost"), Theme::Alien);
+        assert_eq!(default_theme("127.0.0.1"), Theme::Alien);
+        assert_eq!(default_theme(""), Theme::Alien);
+    }
+
+    /// `.org` has to be the end of the host and not merely in it, or
+    /// `xag-lang.org.example.com` would open in the wrong one.
+    #[test]
+    fn org_has_to_be_the_end_of_the_host() {
+        assert_eq!(default_theme("xag-lang.org.example.com"), Theme::Alien);
+        assert_eq!(default_theme("orgs.example.com"), Theme::Alien);
+        assert_eq!(default_theme("borg.example.com"), Theme::Alien);
     }
 
     #[test]

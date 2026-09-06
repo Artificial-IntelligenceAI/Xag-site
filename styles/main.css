@@ -135,6 +135,14 @@ body {
   background: rgba(4, 7, 10, 0.55);
 }
 
+/* The one link that lives outside `main`, so it says so for itself. */
+.warning a {
+  color: var(--name);
+  text-decoration-color: var(--green-line);
+}
+
+.warning a:hover { text-decoration-color: var(--name); }
+
 .cta {
   display: inline-block;
   background: var(--name);

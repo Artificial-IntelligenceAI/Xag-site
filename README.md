@@ -95,6 +95,11 @@ Any path serves `index.html` and the app reads it from there, which is what
 `_redirects` is for. A host that does not honour it will 404 on everything but
 the root.
 
+The two domains are the same site and differ only in where they start: `.org`
+opens in silver, `.com` in alien. It is the last word in the order, not the
+first — an address that names a theme wins, and so does a choice the reader
+made on a previous visit.
+
 `xag-lang.com` and `xag-lang.org` are both registered. The `.com` is canonical
 and is what `index.html` names; pointing the `.org` at it is a redirect for
 whatever ends up serving the site. Nothing is deployed yet.
