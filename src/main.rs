@@ -5,6 +5,7 @@
 //! message is the one `xagc check` actually printed. Nothing on this page
 //! describes a language feature that was not exercised first.
 
+mod route;
 mod space;
 mod syntax;
 mod warp;
@@ -169,12 +170,14 @@ fn Card(
     page: Page,
     anchor: &'static str,
     set_page: WriteSignal<Page>,
+    lite: ReadSignal<bool>,
 ) -> impl IntoView {
     view! {
         <button
             class="card"
             on:click=move |_| {
                 set_page.set(page);
+                write_address(lite.get_untracked(), page, Some(anchor), true);
                 go_to(anchor);
             }
         >
@@ -251,6 +254,50 @@ fn WarpOverlay() -> impl IntoView {
             <span class="warp-dismiss">"click anywhere, or press escape"</span>
         </div>
     }
+}
+
+/// What the address bar currently says.
+fn place_now() -> (Option<route::Theme>, Page) {
+    let path = web_sys::window()
+        .and_then(|w| w.location().pathname().ok())
+        .unwrap_or_else(|| "/".into());
+    let (theme, slug) = route::split(&path);
+    (theme, Page::from_slug(&slug))
+}
+
+/// Writes the address. A page is somewhere you went, so it goes in the
+/// history and Back undoes it; a theme is how you are reading, so it replaces
+/// what is there rather than filling the history with palette changes.
+fn write_address(lite: bool, page: Page, anchor: Option<&str>, went: bool) {
+    let Some(history) = web_sys::window().and_then(|w| w.history().ok()) else {
+        return;
+    };
+    let url = route::build(route::Theme::of(lite), page.slug(), anchor);
+    let nothing = wasm_bindgen::JsValue::NULL;
+    let _ = if went {
+        history.push_state_with_url(&nothing, "", Some(&url))
+    } else {
+        history.replace_state_with_url(&nothing, "", Some(&url))
+    };
+}
+
+/// Back and Forward have to work, or the address bar is decoration.
+fn follow_history(set_page: WriteSignal<Page>, set_lite: WriteSignal<bool>) {
+    use wasm_bindgen::closure::Closure;
+    use wasm_bindgen::JsCast;
+
+    let Some(win) = web_sys::window() else { return };
+
+    let on_pop = Closure::wrap(Box::new(move |_: web_sys::PopStateEvent| {
+        let (theme, page) = place_now();
+        if let Some(theme) = theme {
+            set_lite.set(theme.is_lite());
+        }
+        set_page.set(page);
+    }) as Box<dyn FnMut(web_sys::PopStateEvent)>);
+
+    let _ = win.add_event_listener_with_callback("popstate", on_pop.as_ref().unchecked_ref());
+    on_pop.forget();
 }
 
 /// Where the reader's choice of theme is kept between visits.
@@ -336,6 +383,28 @@ impl Page {
         }
     }
 
+    /// What this page is called in an address. The two that lead nowhere have
+    /// no slug, because an address for a page that does not exist is a promise
+    /// the site cannot keep.
+    fn slug(self) -> &'static str {
+        match self {
+            Page::Home => "",
+            Page::Philosophy => "philosophy",
+            Page::Credits => "credits",
+            Page::Download | Page::Docs => "",
+        }
+    }
+
+    /// Anything unrecognised is the front page. Somebody who typed a wrong
+    /// address should land somewhere rather than nowhere.
+    fn from_slug(slug: &str) -> Page {
+        match slug {
+            "philosophy" => Page::Philosophy,
+            "credits" => Page::Credits,
+            _ => Page::Home,
+        }
+    }
+
     /// Two of these lead nowhere yet, and say so rather than opening on an
     /// apology. There is nothing to download — Xag cannot be installed, only
     /// built — and the documentation is the compiler's README for now.
@@ -353,7 +422,11 @@ impl Page {
 }
 
 #[component]
-fn Dock(page: ReadSignal<Page>, set_page: WriteSignal<Page>) -> impl IntoView {
+fn Dock(
+    page: ReadSignal<Page>,
+    set_page: WriteSignal<Page>,
+    lite: ReadSignal<bool>,
+) -> impl IntoView {
     let items = PAGES
         .iter()
         .map(|&p| {
@@ -365,6 +438,7 @@ fn Dock(page: ReadSignal<Page>, set_page: WriteSignal<Page>) -> impl IntoView {
                         aria-current=move || if page.get() == p { "page" } else { "false" }
                         on:click=move |_| {
                             set_page.set(p);
+                            write_address(lite.get_untracked(), p, None, true);
                             // A new page starts at its top, not wherever the
                             // last one had been scrolled to.
                             if let Some(win) = web_sys::window() {
@@ -659,10 +733,21 @@ fn Credits() -> impl IntoView {
 
 #[component]
 fn App() -> impl IntoView {
-    let (page, set_page) = signal(Page::Home);
+    // The address decides where this starts. If it names a theme that wins;
+    // if it does not, the reader's last choice does.
+    let (named_theme, opened_at) = place_now();
+    let starts_lite = named_theme.map_or_else(stored_solarized, |t| t.is_lite());
+
+    let (page, set_page) = signal(opened_at);
     let at_home = move || page.get() == Page::Home;
 
-    let (solarized, set_solarized) = signal(stored_solarized());
+    let (solarized, set_solarized) = signal(starts_lite);
+
+    // Whatever the address said or left out, it says all of it from here on —
+    // replacing rather than pushing, so arriving does not leave a step behind
+    // it that Back would walk into.
+    write_address(starts_lite, opened_at, None, false);
+    follow_history(set_page, set_solarized);
 
     // Runs on mount as well as on every change, so a reader who chose Solarized
     // last time arrives in it rather than watching it swap over. Closing the
@@ -674,6 +759,7 @@ fn App() -> impl IntoView {
         if on {
             warp::close();
         }
+        write_address(on, page.get_untracked(), None, false);
     });
 
     view! {
@@ -709,15 +795,15 @@ fn App() -> impl IntoView {
                 {move || at_home().then(|| view! {
                     <nav class="cards" aria-label="Jump to">
                         <Card label="Two marks" icon="\'*"
-                              page=Page::Philosophy anchor="marks" set_page=set_page />
+                              page=Page::Philosophy anchor="marks" set_page=set_page lite=solarized />
                         <Card label="Ownership" icon="→"
-                              page=Page::Home anchor="ownership" set_page=set_page />
+                              page=Page::Home anchor="ownership" set_page=set_page lite=solarized />
                         <Card label="Error messages" icon="^^"
-                              page=Page::Home anchor="errors" set_page=set_page />
+                              page=Page::Home anchor="errors" set_page=set_page lite=solarized />
                         <Card label="Three engines" icon="≡"
-                              page=Page::Philosophy anchor="engines" set_page=set_page />
+                              page=Page::Philosophy anchor="engines" set_page=set_page lite=solarized />
                         <Card label="Build from source" icon=">_"
-                              page=Page::Home anchor="building" set_page=set_page />
+                              page=Page::Home anchor="building" set_page=set_page lite=solarized />
                     </nav>
                 })}
             </div>
@@ -740,7 +826,7 @@ fn App() -> impl IntoView {
             }}
         </main>
 
-        <Dock page=page set_page=set_page />
+        <Dock page=page set_page=set_page lite=solarized />
     }
 }
 

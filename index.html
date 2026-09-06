@@ -13,6 +13,7 @@
 <!-- rustc emits bulk-memory and non-trapping float conversions by default, and
      wasm-opt refuses to validate a module using features it has not been told
      about. Naming them is what lets the optimiser run at all. -->
+<link data-trunk rel="copy-file" href="_redirects" />
 <link data-trunk rel="rust" data-wasm-opt="z"
       data-wasm-opt-params="--enable-bulk-memory --enable-nontrapping-float-to-int --enable-sign-ext --enable-mutable-globals --enable-multivalue --enable-reference-types" />
 </head>

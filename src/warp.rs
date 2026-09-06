@@ -345,7 +345,7 @@ mod live {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub use live::{close, install, is_open, open};
+pub use live::{close, install, open};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn open() {}
@@ -353,10 +353,6 @@ pub fn open() {}
 pub fn close() {}
 #[cfg(not(target_arch = "wasm32"))]
 pub fn install() {}
-#[cfg(not(target_arch = "wasm32"))]
-pub fn is_open() -> bool {
-    false
-}
 
 #[cfg(test)]
 mod tests {

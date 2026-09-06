@@ -1,0 +1,7 @@
+# Every address is the same page: the app reads the path and decides what to
+# show. Without this, /alien/philosophy is a file that does not exist and the
+# host says so.
+#
+# 200 rather than 301: the address must stay what the reader typed, or routing
+# has nothing to read.
+/*  /index.html  200

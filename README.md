@@ -63,6 +63,25 @@ trunk build --release    # static files into dist/
 cargo test               # the tokeniser's tests
 ```
 
+## Addresses
+
+Every place on the site has one, and it carries the theme as well as the page:
+
+```
+/alien                  the front page
+/lite/philosophy        Design Philosophy, read in the lite theme
+/alien/credits#license  and a section within it
+```
+
+`alien` is the site's own look; `lite` is Solarized with the sky, the
+simulation and the wider gamut all switched off. An address that names no
+theme — `/philosophy` — uses whichever was chosen last and then rewrites
+itself to say so, so what is in the bar is always the whole instruction.
+
+Any path serves `index.html` and the app reads it from there, which is what
+`_redirects` is for. A host that does not honour it will 404 on everything but
+the root.
+
 `xag-lang.com` and `xag-lang.org` are both registered. The `.com` is canonical
 and is what `index.html` names; pointing the `.org` at it is a redirect for
 whatever ends up serving the site. Nothing is deployed yet.
