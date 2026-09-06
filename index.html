@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Xag</title>
-<meta name="description" content="Xag is a compiled programming language with Rust-style ownership checked at compile time. A size is always written: there is no int on its own, because there is no size to assume. Early work in progress." />
+<meta name="description" content="Xag is a compiled programming language with Rust-style ownership checked at compile time. A size is always written: there is no int on its own, because there is no size to assume. Under development." />
 <link rel="canonical" href="https://xag-lang.com/" />
 <meta name="color-scheme" content="dark" />
 <meta name="theme-color" content="#04070a" />
@@ -14,6 +14,7 @@
      wasm-opt refuses to validate a module using features it has not been told
      about. Naming them is what lets the optimiser run at all. -->
 <link data-trunk rel="copy-file" href="_redirects" />
+<link data-trunk rel="copy-file" href="_headers" />
 <link data-trunk rel="rust" data-wasm-opt="z"
       data-wasm-opt-params="--enable-bulk-memory --enable-nontrapping-float-to-int --enable-sign-ext --enable-mutable-globals --enable-multivalue --enable-reference-types" />
 </head>

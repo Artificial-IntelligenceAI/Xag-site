@@ -47,6 +47,28 @@ compiler and cannot run without it. Nothing it produces belongs on the site —
 see `SITE-BRIEF.md` on why a measured number goes stale in a way that does not
 look like going stale.
 
+## Deploying it
+
+Cloudflare Pages, serving `dist/` as static files. Both domains point at the
+same project — the app reads which one it is on.
+
+```sh
+trunk build --release          # with `trunk serve` NOT running
+npx wrangler pages deploy dist --project-name=xag-site
+```
+
+**Stop `trunk serve` before building for deploy.** The dev server writes to the
+same `dist/`, and what it writes carries an autoreload client that opens a
+WebSocket to an address only the dev server has. Deployed, that is a script on
+every page reconnecting forever to nothing. `trunk build --release` on its own
+does not include it; the check is that `dist/index.html` contains no
+`__TRUNK_ADDRESS__`.
+
+`_redirects` makes every path serve `index.html`, without which the routing has
+nothing to read. `_headers` keeps the page itself uncached — every path is the
+same HTML, and a cached one strands a reader on an old build — while the hashed
+assets are kept for a year, since a changed file gets a changed name.
+
 ## Building it
 
 Needs Rust with the `wasm32-unknown-unknown` target, and
