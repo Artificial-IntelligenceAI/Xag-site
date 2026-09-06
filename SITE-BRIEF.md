@@ -82,6 +82,24 @@ paraphrasing.
 - **The open design questions.** `design/syntax.md` ends with seven of them.
   They are genuinely open and will change.
 
+### A measured number goes stale too, and looks like it cannot
+
+Everything above is a claim, and a claim that is wrong reads as a mistake. A
+benchmark result reads as a fact, which is what makes it the more dangerous
+thing to put on a page: nobody re-checks a fact.
+
+On 2026-09-06 a billion-iteration loop was measured at twenty times slower than
+the same loop in C. By that afternoon the compiler emitted the machine's own
+instruction and the same loop was one-and-a-bit times slower. Both numbers were
+correct when taken, four hours apart. A page carrying the first one would have
+been wrong by lunchtime, and would have gone on being wrong quietly, because
+nothing about it would have looked like it needed revisiting.
+
+So the rule is not that measurements are unreliable. It is that a number is
+about the afternoon it was taken on, and a page has no way of saying so. The
+compiler repo keeps `bench/run.py` for asking the question again; the site
+should keep the answer off the pages and point at the question instead.
+
 ## Voice
 
 Match the README rather than the average language homepage. It is plain, direct,

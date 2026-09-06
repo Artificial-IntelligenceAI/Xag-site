@@ -40,6 +40,13 @@ and a starred thing is a written value wherever it is met, so it has no parser,
 no lookahead, and no memory of the token before it. Its tests check that, and
 that colouring a program never loses it.
 
+## Where the benchmark went
+
+It lives in the compiler repo now, at `bench/run.py`, because it measures the
+compiler and cannot run without it. Nothing it produces belongs on the site —
+see `SITE-BRIEF.md` on why a measured number goes stale in a way that does not
+look like going stale.
+
 ## Building it
 
 Needs Rust with the `wasm32-unknown-unknown` target, and
