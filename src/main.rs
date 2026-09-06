@@ -563,9 +563,10 @@ fn Credits() -> impl IntoView {
         <section id="credits">
             <h2>"Credits"</h2>
             <p>
-                "Xag is designed by Tankun Sriket. The compiler is written against
-                 LLVM, and its grapheme handling is built from the Unicode Character
-                 Database, version 17.0.0."
+                "Xag is designed by human Tankun Sriket, and implemented by AI
+                 (Anthropic's Claude). The compiler is written against LLVM, and its
+                 grapheme handling is built from the Unicode Character Database,
+                 version 17.0.0."
             </p>
             <p>
                 "The decimal arithmetic is checked against Python's "

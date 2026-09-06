@@ -33,6 +33,73 @@
   --measure: 42rem;
 }
 
+/* ══════════════ where the display can actually show it ══════════════ */
+
+/* The palette above is sRGB, and stays that way for everything that renders it
+ * as sRGB. This is not a brightening: it is the same two colours said in a
+ * space that can hold more of them, so a green that sRGB has to clip arrives
+ * whole.
+ *
+ * Both questions have to be asked. `color-gamut: p3` says the display can show
+ * the colour; `dynamic-range: high` says it has the headroom to show it
+ * brightly rather than tone-mapping it back down. A screen answering only the
+ * first gets the sRGB palette, because a wide-gamut colour squeezed into an SDR
+ * envelope comes out muddier than the sRGB one it replaced.
+ *
+ * `@supports` guards the lot: a browser that cannot parse `color(display-p3 …)`
+ * must not be handed a rule that drops the declaration and leaves the token
+ * unset. */
+@supports (color: color(display-p3 0 1 0)) {
+  @media (color-gamut: p3) and (dynamic-range: high) {
+    :root {
+      /* The two marks, past the edge of sRGB. */
+      --name: color(display-p3 0.196 0.925 0.545);
+      --value: color(display-p3 0.945 0.675 0.235);
+
+      --green-dim: color(display-p3 0.196 0.925 0.545 / 0.14);
+      --green-line: color(display-p3 0.196 0.925 0.545 / 0.24);
+
+      --fg: color(display-p3 0.898 0.937 0.914);
+    }
+
+    /* A rock is lit by a real light now rather than a printed one. */
+    .rock .body { stroke: color(display-p3 0.48 0.96 0.72 / 0.5); }
+    .rock .facet { fill: color(display-p3 0.66 1 0.84 / 0.24); }
+    .rock.middle { filter: drop-shadow(0 0 9px color(display-p3 0.24 0.88 0.54 / 0.24)); }
+    .rock.near { filter: drop-shadow(0 0 16px color(display-p3 0.24 0.88 0.54 / 0.3)); }
+
+    /* An impact is the one thing on the page that should be hard to look at. */
+    .shard polygon {
+      fill: color(display-p3 0.62 1 0.8);
+      stroke: color(display-p3 0.9 1 0.95 / 0.7);
+    }
+
+    .flash {
+      background: radial-gradient(
+        circle,
+        color(display-p3 0.84 1 0.91 / 0.95),
+        color(display-p3 0.24 0.88 0.54 / 0.45) 42%,
+        color(display-p3 0.24 0.88 0.54 / 0) 70%
+      );
+    }
+
+    .star { background: color(display-p3 0.87 0.97 0.92); }
+
+    .cta { box-shadow: 0 0 0 color(display-p3 0.24 0.88 0.54 / 0); }
+    .cta:hover { box-shadow: 0 6px 28px color(display-p3 0.24 0.88 0.54 / 0.36); }
+  }
+}
+
+/* Where a browser will hand back the headroom it is holding, take it. Nothing
+ * above depends on this: it is ignored wherever it is not understood, and the
+ * page is already correct without it. */
+@supports (dynamic-range-limit: no-limit) {
+  @media (dynamic-range: high) {
+    .flash,
+    .shard polygon { dynamic-range-limit: no-limit; }
+  }
+}
+
 * { box-sizing: border-box; }
 
 html {
