@@ -336,10 +336,10 @@ fn apply_theme(theme: route::Theme) {
         let _ = store.set_item(THEME_KEY, theme.slug());
     }
 
-    if theme.is_solarized() {
-        space::pause();
-    } else {
+    if theme.has_sky() {
         space::resume();
+    } else {
+        space::pause();
     }
 }
 
@@ -777,7 +777,8 @@ fn App() -> impl IntoView {
     Effect::new(move |_| {
         let now = theme.get();
         apply_theme(now);
-        if now.is_solarized() {
+        // The reveal is the alien theme's own; it says nothing in the others.
+        if now != route::Theme::Alien {
             warp::close();
         }
         write_address(now, page.get_untracked(), None, false);

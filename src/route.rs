@@ -10,22 +10,28 @@
 
 /// The ways the site can look.
 ///
-/// `lite` is the honest name for the pair of them: no sky, no wider gamut, no
-/// simulation running behind anything — Solarized and nothing else. The site's
-/// own look is the alien one, which is what the name turns out to stand for.
+/// `alien` is the site's own look, and what the name turns out to stand for.
+/// `silver` is the same place in a colder light — Ag is silver and XAG is what
+/// a troy ounce of it trades under, which is a coincidence rather than the
+/// point, so it is a theme and not the identity.
+///
+/// `lite` is the honest name for the other pair: no sky, no wider gamut, no
+/// simulation running behind anything — Solarized and nothing else.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Theme {
     Alien,
+    Silver,
     Lite,
     Lite2,
 }
 
-pub const THEMES: [Theme; 3] = [Theme::Alien, Theme::Lite, Theme::Lite2];
+pub const THEMES: [Theme; 4] = [Theme::Alien, Theme::Silver, Theme::Lite, Theme::Lite2];
 
 impl Theme {
     pub fn slug(self) -> &'static str {
         match self {
             Theme::Alien => "alien",
+            Theme::Silver => "silver",
             Theme::Lite => "lite",
             Theme::Lite2 => "lite2",
         }
@@ -35,6 +41,7 @@ impl Theme {
     pub fn label(self) -> &'static str {
         match self {
             Theme::Alien => "Alien",
+            Theme::Silver => "Silver",
             Theme::Lite => "Solarized Dark",
             Theme::Lite2 => "Solarized Light",
         }
@@ -46,6 +53,7 @@ impl Theme {
     pub fn attribute(self) -> Option<&'static str> {
         match self {
             Theme::Alien => None,
+            Theme::Silver => Some("silver"),
             Theme::Lite => Some("solarized"),
             Theme::Lite2 => Some("solarized-light"),
         }
@@ -55,10 +63,12 @@ impl Theme {
         THEMES.into_iter().find(|t| t.slug() == slug)
     }
 
-    /// Either Solarized. Both stop the sky and both leave the wider gamut
-    /// alone; only the ground under them differs.
-    pub fn is_solarized(self) -> bool {
-        !matches!(self, Theme::Alien)
+    /// Whether the rocks are drifting behind it. Alien and Silver are the same
+    /// place in two lights; the Solarized pair are flat by definition, and
+    /// running a simulation behind a palette chosen for its calm would be
+    /// missing the point of asking for it.
+    pub fn has_sky(self) -> bool {
+        matches!(self, Theme::Alien | Theme::Silver)
     }
 }
 
@@ -114,6 +124,7 @@ mod tests {
         assert_eq!(split("/alien"), (Some(Theme::Alien), String::new()));
         assert_eq!(split("/lite"), (Some(Theme::Lite), String::new()));
         assert_eq!(split("/lite2"), (Some(Theme::Lite2), String::new()));
+        assert_eq!(split("/silver"), (Some(Theme::Silver), String::new()));
     }
 
     /// `lite` must not swallow `lite2`, which a prefix match would.
@@ -139,7 +150,7 @@ mod tests {
             1,
             "exactly one theme is the default"
         );
-        assert!(THEMES.iter().filter(|t| t.is_solarized()).count() == 2);
+        assert_eq!(THEMES.iter().filter(|t| t.has_sky()).count(), 2);
     }
 
     #[test]

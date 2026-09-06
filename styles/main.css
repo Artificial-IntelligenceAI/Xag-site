@@ -181,6 +181,11 @@ body {
   transform: translateX(3px);
 }
 
+[data-theme="silver"] .card:hover {
+  background: rgba(32, 38, 47, 0.88);
+  border-color: rgba(203, 214, 228, 0.5);
+}
+
 .card:focus-visible {
   outline: 2px solid var(--name);
   outline-offset: 2px;
@@ -591,11 +596,11 @@ blockquote footer { font-family: var(--mono); font-size: 0.8rem; }
   transition: color 0.15s ease, background 0.15s ease;
 }
 
-button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09); }
+button.dock-item:hover { color: var(--fg); background: var(--green-dim); }
 
 .dock-item.here {
   color: var(--name);
-  background: rgba(62, 224, 138, 0.14);
+  background: var(--green-dim);
 }
 
 .dock-item:focus-visible {
@@ -1029,3 +1034,87 @@ button.wordmark:focus-visible {
 @media (max-width: 40rem) {
   .theme { top: 0.75rem; right: 0.75rem; font-size: 0.65rem; padding: 0.4rem 0.7rem; }
 }
+
+/* ══════════════ Silver ══════════════ */
+
+/* The same place in a colder light. The sky stays — this is the alien theme's
+ * sibling, not one of the flat ones — and everything that was lit green is lit
+ * like metal instead.
+ *
+ * It gets no wide-gamut block of its own, and that is not an oversight: P3
+ * buys almost nothing for greys, since the two gamuts differ most in saturated
+ * colour and hardly at all near the neutral axis. The green theme is where
+ * there was something to gain. */
+:root[data-theme="silver"] {
+  --bg: #06070a;
+  --bg-soft: #0b0d11;
+  --panel: #101318;
+  --fg: #e6e9ee;
+  --muted: #8b929c;
+  --rule: #1d222a;
+
+  /* Still two marks. Cool against warm, so they stay apart for a reader who
+   * cannot tell a hue from a hue — the same reason the green theme's second
+   * mark is amber. */
+  --name: #cbd6e4;
+  --value: #d8b46a;
+
+  --green-dim: rgba(203, 214, 228, 0.12);
+  --green-line: rgba(203, 214, 228, 0.22);
+
+  --emph: #ffffff;
+  --on-accent: #06070a;
+}
+
+/* The rocks are ore rather than moss. */
+[data-theme="silver"] .space-defs .lit { stop-color: #9fb0c4; }
+[data-theme="silver"] .space-defs .dark { stop-color: #0d1116; }
+
+[data-theme="silver"] .rock .body { stroke: rgba(226, 235, 247, 0.5); }
+[data-theme="silver"] .rock .facet { fill: rgba(240, 247, 255, 0.26); }
+[data-theme="silver"] .rock.middle { filter: drop-shadow(0 0 9px rgba(190, 208, 230, 0.22)); }
+[data-theme="silver"] .rock.near { filter: drop-shadow(0 0 16px rgba(190, 208, 230, 0.28)); }
+
+[data-theme="silver"] .shard polygon {
+  fill: #eaf1fb;
+  stroke: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="silver"] .flash {
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.92),
+    rgba(196, 214, 236, 0.42) 42%,
+    rgba(196, 214, 236, 0) 70%
+  );
+}
+
+[data-theme="silver"] .star { background: #eef3fa; }
+
+[data-theme="silver"] .scrim {
+  background:
+    linear-gradient(90deg, var(--bg) 2%, rgba(6, 7, 10, 0.82) 20%,
+      rgba(6, 7, 10, 0.34) 38%, rgba(6, 7, 10, 0) 56%),
+    radial-gradient(110% 80% at 74% 44%, rgba(180, 200, 226, 0.1), transparent 64%),
+    linear-gradient(to bottom, transparent 78%, var(--bg) 100%);
+}
+
+@media (max-width: 60rem) {
+  [data-theme="silver"] .scrim {
+    background:
+      linear-gradient(180deg, rgba(6, 7, 10, 0.72), rgba(6, 7, 10, 0.42) 45%, var(--bg)),
+      radial-gradient(110% 60% at 70% 30%, rgba(180, 200, 226, 0.12), transparent 60%);
+  }
+}
+
+[data-theme="silver"] .card,
+[data-theme="silver"] .dock,
+[data-theme="silver"] .theme {
+  background: rgba(16, 19, 24, 0.78);
+}
+
+[data-theme="silver"] .cta:hover { box-shadow: 0 6px 28px rgba(203, 214, 228, 0.26); }
+
+/* The name is still the alien theme's to open, so it is plain text here and
+ * looks it. */
+[data-theme="silver"] .warp { display: none !important; }

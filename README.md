@@ -73,9 +73,14 @@ Every place on the site has one, and it carries the theme as well as the page:
 /alien/credits#license  and a section within it
 ```
 
-`alien` is the site's own look. `lite` and `lite2` are Solarized Dark and
-Solarized Light, both with the sky, the simulation and the wider gamut
-switched off — lite is the honest name for what they are. An address that
+`alien` is the site's own look. `silver` is the same place in a colder light:
+the sky stays and the rocks read as ore rather than moss. `lite` and `lite2`
+are Solarized Dark and Solarized Light, both with the sky, the simulation and
+the wider gamut switched off — lite is the honest name for what they are.
+
+Silver is a theme and not the identity. Ag is silver and XAG is what a troy
+ounce of it trades under, which is a coincidence the name can wear without
+being about it. An address that
 names no theme — `/philosophy` — uses whichever was chosen last and then
 rewrites itself to say so, so what is in the bar is always the whole
 instruction.
