@@ -30,6 +30,7 @@ DEFAULT_XAGC = Path("/Users/ts/SafetyBolt language/build/xagc")
 CASES = [
     ("add", "total + (i x 3)   native"),
     ("loop", "total + (i mod 7)"),
+    ("div", "total + (i / 7)"),
 ]
 
 RUNS = 7

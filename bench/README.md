@@ -17,31 +17,36 @@ It builds the same loop twice, once with `xagc build` and once with
 `clang -O3`, runs each seven times after a warm-up, and refuses to report
 anything if the two disagree about the answer.
 
-## What the two cases are for
+**Quiet the machine first.** A dev server and a running build were enough to
+put the `mod` row at 1.3x when it is really 1.15x, and to move the milliseconds
+by a third. Load does not cancel out of the ratio, so it is not enough to say
+"read the ratio and ignore the times".
+
+## What the three cases are for
 
 `add.xag` is the control: a billion iterations of arithmetic that compiles to
 instructions. Both compilers fold it to a constant and never run the loop, which
 is the point — it says the Xag backend is getting real optimisation, so whatever
-the other case costs is about the operation rather than about codegen.
+the other cases cost is about the operation rather than about codegen.
 
-`loop.xag` is the measurement: the same billion iterations with a `mod` in the
-body. `mod` is written rather than a plain series so that nothing can work the
-answer out in advance instead of running the loop.
+`loop.xag` and `div.xag` are the measurements, putting `mod` and `/` in the body.
+They are written that way, rather than as a plain series, so that nothing can
+work the answer out in advance instead of running the loop. Both are here
+because both were the same problem and were fixed by the same change; a case for
+only one of them would let the other regress unnoticed.
 
-## Where it stood on 2026-09-06
+## Where it stood on 2026-09-06, against compiler 446300d
 
 ```
 loop body                        C -O3     Xag build    ratio
-total + (i x 3)   native         3.9 ms       4.2 ms     1.1x
-total + (i mod 7)              429.6 ms     578.0 ms     1.3x
+total + (i x 3)   native         1.5 ms       1.7 ms     1.1x
+total + (i mod 7)              313.0 ms     359.4 ms     1.1x
+total + (i / 7)                274.9 ms     298.3 ms     1.1x
 ```
-
-Read the ratio and not the milliseconds. The absolute numbers move by a third
-between runs depending on what else the machine is doing; the ratio holds.
 
 ## What happened earlier the same day
 
-Measured a few hours before the above, the second row read **316 ms against
+Measured a few hours before the above, the `mod` row read **316 ms against
 6543 ms — twenty times slower**. The cause was visible in `xagc ir`: `mod` was
 not an instruction but a call out to the runtime, widened to `i128` and
 truncated back, which the optimiser could not see through, so `mod 7` never
@@ -52,15 +57,20 @@ became the multiply-and-shift that clang emits and nothing vectorised.
 ```
 
 The width and signedness in that call were already compile-time constants, so
-the operation could be emitted inline instead. It now is:
+the operation could be emitted inline instead. It now is, for `/` as well as
+`mod`:
 
 ```llvm
 %0 = urem i32 %.lhs.trunc, 7
 ```
 
-LLVM strength-reduces it and narrows it to 32 bits, having proved the range.
-Twenty times became one and a bit, in an afternoon.
+LLVM strength-reduces it and narrows it to 32 bits, having proved the range —
+something it could never do through a call. Twenty times became one and a bit,
+in an afternoon.
 
 Which is the argument for keeping this here rather than writing a number down
-somewhere. A benchmark from this morning was wrong by lunchtime, and it will be
-wrong again — the useful thing is not the figure but being able to ask.
+somewhere. The first measurement was stale within hours, and the second one
+will be too. The useful thing is not the figure but being able to ask again.
+
+`^` is still a call rather than an instruction, because it is a loop and not
+one. There is no case for it here yet.
