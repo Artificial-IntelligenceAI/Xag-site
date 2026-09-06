@@ -52,6 +52,17 @@ look like going stale.
 Cloudflare Pages, serving `dist/` as static files. Both domains point at the
 same project — the app reads which one it is on.
 
+A push to `main` deploys it: `.github/workflows/deploy.yml` runs the tests,
+builds, checks what it is about to ship, and hands `dist/` to Cloudflare. It
+needs two repository secrets — `CLOUDFLARE_API_TOKEN`, scoped to Cloudflare
+Pages: Edit, and `CLOUDFLARE_ACCOUNT_ID`.
+
+It uses no third-party actions. Everything but checking out and caching is a
+command that can be read in the file and run by hand, which is the same reason
+the compiler's oracle has no dependencies.
+
+By hand, when that is wanted:
+
 ```sh
 trunk build --release          # with `trunk serve` NOT running
 npx wrangler pages deploy dist --project-name=xag-site

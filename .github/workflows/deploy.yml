@@ -1,0 +1,92 @@
+# Builds the site and puts it on Cloudflare Pages, on every push to main.
+#
+# It uses no third-party actions. Everything but checking out and caching —
+# both of which are GitHub's own — is a command that can be read here and run
+# by hand, which is the same reason the compiler's oracle has no dependencies:
+# a thing that deploys your site is a poor place to trust somebody else's code.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # So a deploy can be asked for without a commit to hang it on.
+  workflow_dispatch:
+
+# One at a time, newest wins. Two deploys racing would land in either order.
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Read through `env` rather than `secrets` directly, because a step's `if`
+    # can see the one and not reliably the other.
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust, and the target the site is built for
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+
+      - name: Cache what does not change
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cache/trunk
+            target
+          key: ${{ runner.os }}-build-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-build-
+
+      # Before anything is built, let alone shipped. The tokeniser, the sky and
+      # the addresses are all checked here rather than in a browser.
+      - name: The tests
+        run: cargo test --locked
+
+      - name: Trunk
+        run: |
+          curl -fsSL https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz \
+            | tar -xzf - -C /usr/local/bin trunk
+          trunk --version
+
+      - name: Build
+        run: trunk build --release
+
+      # `trunk serve` writes to the same directory and what it writes carries an
+      # autoreload client pointed at an address only the dev server has. It
+      # cannot get here from a clean checkout, which is exactly why this is
+      # worth asserting: the day it can, nobody will be looking.
+      - name: Nothing from the dev server may ship
+        run: |
+          if grep -q '__TRUNK_ADDRESS__' dist/index.html; then
+            echo "::error::dist carries the dev server's autoreload client"
+            exit 1
+          fi
+          for f in _headers _redirects index.html; do
+            test -f "dist/$f" || { echo "::error::dist/$f is missing"; exit 1; }
+          done
+
+      - name: Deploy
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          npx --yes wrangler@4 pages deploy dist \
+            --project-name=xag-site \
+            --branch=main
+
+      # Everything above is worth running whether or not this can deploy, so a
+      # missing secret says so rather than failing the build over it.
+      - name: Say why nothing was deployed
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: |
+          echo "::notice::Built and tested, but not deployed: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are not both set. Add them under Settings, Secrets and variables, Actions."
