@@ -26,6 +26,14 @@ fn block(b: &Block, out: &mut String) {
             "`{file}`, run with `xagc run {file}`:\n\n```xag\n{}\n```\n\nIt prints:\n\n```text\n{output}\n```\n\n",
             src.trim_end()
         )),
+        Block::Questions => {
+            for q in crate::content::QUESTIONS.iter() {
+                out.push_str(&format!("**{}**\n\n{}\n\n", q.asked, to_markdown(q.short)));
+                for para in q.answer.iter() {
+                    out.push_str(&format!("{}\n\n", to_markdown(para)));
+                }
+            }
+        }
         Block::MarksTable => {
             out.push_str("| written | is |\n| --- | --- |\n");
             for (_, mark, meaning) in MARKS.iter() {

@@ -54,6 +54,19 @@ fn block(b: &Block, out: &mut String) {
                 escape(output)
             ));
         }
+        Block::Questions => {
+            for q in crate::content::QUESTIONS.iter() {
+                out.push_str(&format!(
+                    "<h3 id=\"{}\">{}</h3><p class=\"claim\">{}</p>",
+                    q.id,
+                    escape(q.asked),
+                    to_html(q.short)
+                ));
+                for para in q.answer.iter() {
+                    out.push_str(&format!("<p>{}</p>", to_html(para)));
+                }
+            }
+        }
         Block::MarksTable => {
             out.push_str("<table class=\"marks-table\"><tbody>");
             for (class, mark, meaning) in MARKS.iter() {

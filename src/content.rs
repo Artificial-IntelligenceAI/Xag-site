@@ -39,6 +39,8 @@ pub enum Block {
     LivePanel,
     /// A list where each item leads with a name.
     Bullets(&'static [(&'static str, &'static str)]),
+    /// The questions, each landing on an id of its own.
+    Questions,
     /// Somebody else's words.
     Quote {
         paragraphs: &'static [&'static str],
@@ -87,6 +89,11 @@ pub const HOME: Page = Page {
            because there is no size to assume. Programs are compiled ahead of time, \
            either to native code or to a form run by an AOT interpreter.",
     sections: &[
+        Section {
+            id: "questions",
+            heading: "Questions",
+            blocks: &[Block::Questions],
+        },
         Section {
             id: "reading",
             heading: "Reading a program",
@@ -378,6 +385,38 @@ pub const TAGLINE: [(&str, bool); 6] = [
     ("Slow Compilation Time", false),
 ];
 
+/// Something a reader might reasonably think, and what there is to say to it.
+///
+/// These are the blocks down the right of the front page. A question is a thing
+/// somebody actually thinks rather than a heading dressed as one, and the
+/// answer has to be worth the arriving — a card that warps you across space to
+/// agree with itself is a card nobody clicks twice.
+pub struct Question {
+    /// Where a card lands when it takes you here.
+    pub id: &'static str,
+    /// As a reader would put it.
+    pub asked: &'static str,
+    /// The short of it, said large.
+    pub short: &'static str,
+    /// The rest, in the small markup.
+    pub answer: &'static [&'static str],
+}
+
+pub const QUESTIONS: [Question; 1] = [Question {
+    id: "only-positives",
+    asked: "I've seen languages with only positives. No negatives.",
+    short: "They have them. They did not write them down.",
+    answer: &[
+        "Every language costs something — in what it refuses, in what it makes \
+         you say out loud, in what it makes you wait for. A page listing only \
+         what a language gives you is not describing a language without costs. \
+         It is describing one whose costs you meet later, in your own code, \
+         where they are expensive to find.",
+        "Xag's three are on the front page, in red, above the button. They are \
+         not all of them — they are the ones known well enough to write down.",
+    ],
+}];
+
 /// The three things a piece of Xag can be, and what each is.
 pub const MARKS: [(&str, &str, &str); 3] = [
     ("tk-name", "'…'", "a **name**"),
@@ -393,6 +432,16 @@ mod tests {
     /// nothing to put in a title or a description.
     /// It is a claim about the language either way, so each has to say which
     /// it is — a line that is neither is a line nobody knows how to read.
+    /// A question with nothing to say is a card that wastes the journey.
+    #[test]
+    fn every_question_is_answered() {
+        for q in QUESTIONS.iter() {
+            assert!(q.asked.ends_with('.') || q.asked.ends_with('?'), "{}", q.asked);
+            assert!(!q.short.is_empty(), "{} has no answer", q.asked);
+            assert!(!q.answer.is_empty(), "{} has only a headline", q.asked);
+        }
+    }
+
     #[test]
     fn the_tagline_says_which_of_its_claims_are_good() {
         assert!(TAGLINE.iter().all(|(text, _)| !text.is_empty()));

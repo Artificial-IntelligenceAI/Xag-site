@@ -1191,3 +1191,22 @@ button.wordmark:focus-visible {
 /* The name is still the alien theme's to open, so it is plain text here and
  * looks it. */
 [data-theme="silver"] .warp { display: none !important; }
+
+/* A card that asks rather than points. It carries more words than the others,
+ * so it is allowed to wrap where they may not. */
+.card.asks .card-label {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.card.asks .card-icon { color: var(--value); }
+
+/* The question itself, where the card lands. */
+main h3 {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 2rem 0 0.75rem;
+  scroll-margin-top: 2rem;
+}

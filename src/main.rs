@@ -514,6 +514,16 @@ fn BlockView(block: &'static content::Block) -> impl IntoView {
         Block::Sample { file, src, output } => {
             view! { <Sample file=file src=src output=output /> }.into_any()
         }
+        Block::Questions => view! {
+            {content::QUESTIONS.iter().map(|q| view! {
+                <h3 id=q.id>{q.asked}</h3>
+                <p class="claim" inner_html=markup::to_html(q.short)></p>
+                {q.answer.iter().map(|para| view! {
+                    <p inner_html=markup::to_html(para)></p>
+                }).collect_view()}
+            }).collect_view()}
+        }
+        .into_any(),
         Block::MarksTable => view! {
             <table class="marks-table">
                 <tbody>
@@ -640,7 +650,23 @@ fn App() -> impl IntoView {
                 </div>
 
                 {move || at_home().then(|| view! {
-                    <nav class="cards" aria-label="Jump to">
+                    <nav class="cards" aria-label="Questions and sections">
+                        {content::QUESTIONS.iter().map(|q| view! {
+                            <button
+                                class="card asks"
+                                on:click=move |_| {
+                                    set_page.set(Page::Home);
+                                    write_address(theme.get_untracked(), Page::Home, Some(q.id), true);
+                                    go_to(q.id);
+                                }
+                            >
+                                <span class="card-icon" aria-hidden="true">"?"</span>
+                                <span class="card-label">{q.asked}</span>
+                                <svg class="card-arrow" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 12h15M13 6l6 6-6 6" />
+                                </svg>
+                            </button>
+                        }).collect_view()}
                         <Card label="Two marks" icon="\'*"
                               page=Page::Philosophy anchor="marks" set_page=set_page theme=theme />
                         <Card label="Ownership" icon="→"
