@@ -1,0 +1,17 @@
+Hello, I think there may be thing(s) wrong with your code. I'm sorry, if I'm wrong.
+
+file: moved.xag, line: 11, column: 18 (moved.xag:11:18)
+
+`'greeting'` was moved, and holds nothing now.
+
+  11 |     print.stdout['greeting' \n];
+     |                  ^^^^^^^^^^ used here
+  10 |     keep[move 'greeting'];
+     |          ^^^^^^^^^^^^^^^ but it was handed over here
+
+Error code: E0403
+Rule(s) broken: a name holds its value until it is moved, and then holds nothing
+Tip(s): what was moved is somewhere else now, and there is only ever one of it.
+
+1 error.
+If I am wrong about any of that, please tell me: https://github.com/Artificial-IntelligenceAI/Xag-lang/issues

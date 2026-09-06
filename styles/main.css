@@ -1,0 +1,475 @@
+/* Xag — black, green, and the two marks.
+ *
+ * There are two marks in Xag, so there are exactly two accent colours here: one
+ * for a name, one for a written value. Everything else is neutral. A third
+ * accent would contradict, in the only language a page really speaks, the thing
+ * this page is saying.
+ *
+ * The green is the theme's; the amber is the second mark. They stay apart for a
+ * reader with deuteranopia or protanopia, which two greens would not. */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #04070a;
+  --bg-soft: #070d0c;
+  --panel: #0a1310;
+  --fg: #e4efe8;
+  --muted: #7d9389;
+  --rule: #17251f;
+
+  /* The two marks, and only two. */
+  --name: #3ee08a;
+  --value: #e0a94a;
+
+  --green-dim: rgba(62, 224, 138, 0.14);
+  --green-line: rgba(62, 224, 138, 0.22);
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+
+  --measure: 42rem;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; background: var(--bg); }
+
+body {
+  margin: 0;
+  padding: 0 0 6rem;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════════ the hero ══════════════ */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  min-height: min(92vh, 820px);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--rule);
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 78rem;
+  margin-inline: auto;
+  padding: 5rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.hero h1 {
+  font-family: var(--sans);
+  font-size: clamp(4.5rem, 13vw, 9rem);
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  font-weight: 500;
+  margin: 0 0 1.25rem;
+  color: #fff;
+}
+
+.tagline {
+  font-size: clamp(1.4rem, 3.1vw, 2.15rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  margin: 0 0 1.75rem;
+  color: var(--fg);
+}
+
+.hero .warning {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  margin: 0 0 2rem;
+  background: rgba(4, 7, 10, 0.55);
+}
+
+.cta {
+  display: inline-block;
+  background: var(--name);
+  color: #04150c;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  padding: 0.85rem 2rem;
+  border-radius: 999px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 0 0 rgba(62, 224, 138, 0);
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(62, 224, 138, 0.32);
+}
+
+/* ── the cards down the right ── */
+
+.cards { display: flex; flex-direction: column; gap: 0.65rem; }
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.15rem 1.35rem;
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--fg);
+  background: rgba(7, 18, 14, 0.74);
+  border: 1px solid var(--green-line);
+  backdrop-filter: blur(16px) saturate(0.8);
+  -webkit-backdrop-filter: blur(16px) saturate(0.8);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.card:hover {
+  background: rgba(16, 40, 30, 0.85);
+  border-color: rgba(62, 224, 138, 0.5);
+  transform: translateX(3px);
+}
+
+.card-icon {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  color: var(--name);
+  width: 1.9rem;
+  flex: none;
+  text-align: center;
+}
+
+.card-label { flex: 1; font-size: 1.02rem; }
+
+.card-arrow {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.18s ease, transform 0.18s ease;
+}
+
+.card:hover .card-arrow { stroke: var(--name); transform: translateX(3px); }
+
+/* ══════════════ the space behind it ══════════════ */
+
+.space { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.space-defs { position: absolute; width: 0; height: 0; }
+
+.stars, .rocks { position: absolute; inset: 0; }
+
+.star {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: #dff7e9;
+}
+
+.twinkles { animation: twinkle var(--secs) ease-in-out var(--delay) infinite alternate; }
+
+@keyframes twinkle {
+  from { opacity: 0.12; }
+  to   { opacity: 0.95; }
+}
+
+.rock {
+  position: absolute;
+  animation: drift var(--secs) ease-in-out var(--delay) infinite alternate;
+  will-change: transform;
+}
+
+.rock svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* A rim, so the outline reads against the black, and a lit face so the light
+ * appears to be coming from somewhere. */
+.rock .body { stroke: rgba(126, 245, 184, 0.45); stroke-width: 1.4; }
+.rock .facet { fill: rgba(168, 255, 214, 0.22); }
+
+.rock.far    { opacity: 0.5;  filter: blur(1.4px); }
+.rock.middle { opacity: 0.8;  filter: drop-shadow(0 0 9px rgba(62, 224, 138, 0.2)); }
+.rock.near   { opacity: 0.95; filter: drop-shadow(0 0 16px rgba(62, 224, 138, 0.26)); }
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  to   { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--spin)); }
+}
+
+/* The words sit on the left and want the dark; the bottom hands over to the
+ * page. */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--bg) 2%, rgba(4, 7, 10, 0.82) 20%,
+      rgba(4, 7, 10, 0.34) 38%, rgba(4, 7, 10, 0) 56%),
+    radial-gradient(110% 80% at 74% 44%, rgba(62, 224, 138, 0.1), transparent 64%),
+    linear-gradient(to bottom, transparent 78%, var(--bg) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rock, .twinkles { animation: none; }
+}
+
+/* ══════════════ the page ══════════════ */
+
+main, .site-footer {
+  max-width: var(--measure);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+.lede {
+  font-size: 1.15rem;
+  color: var(--fg);
+  margin: 3.5rem 0 0;
+}
+
+section { padding-top: 3.5rem; }
+
+h2 {
+  font-family: var(--mono);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--rule);
+}
+
+p { margin: 0 0 1.15rem; }
+
+.claim {
+  font-family: var(--mono);
+  font-size: 1.02rem;
+  line-height: 1.5;
+  margin: 1.75rem 0;
+  padding-left: 1rem;
+  border-left: 2px solid var(--green-line);
+}
+
+a { color: inherit; text-underline-offset: 3px; }
+
+/* A link is green. The cards and the call to action are their own things and
+ * keep their own colour. */
+main a, .site-footer a, .fallback a {
+  color: var(--name);
+  text-decoration-color: rgba(62, 224, 138, 0.4);
+}
+
+main a:hover, .site-footer a:hover, .fallback a:hover {
+  text-decoration-color: var(--name);
+}
+
+/* Said sideways, down the edge of the page, because it is a note about how the
+ * page is made rather than anything the page is saying. */
+.vertical-note {
+  position: fixed;
+  left: 1.15rem;
+  top: 50%;
+  z-index: 5;
+  margin: 0;
+  writing-mode: vertical-rl;
+  transform: translateY(-50%) rotate(180deg);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Below this there is no margin to stand it in, and it would cross the text. */
+@media (max-width: 64rem) {
+  .vertical-note { display: none; }
+}
+
+.warning {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.6rem 0.85rem;
+}
+
+/* ── code ── */
+
+code, pre { font-family: var(--mono); }
+
+p code, li code, td code {
+  font-size: 0.88em;
+  background: var(--panel);
+  border-radius: 3px;
+  padding: 0.1em 0.35em;
+}
+
+pre {
+  margin: 0;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 1rem 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+pre code { background: none; padding: 0; font-size: inherit; }
+
+/* The two marks, and the neutrals around them. */
+.tk-name    { color: var(--name); }
+.tk-value   { color: var(--value); }
+.tk-word    { color: var(--fg); }
+.tk-punct   { color: var(--muted); }
+.tk-comment { color: var(--muted); font-style: italic; }
+
+/* An escape is an item sitting beside the text, not hidden inside it — so it is
+ * drawn as standing outside rather than given a colour of its own. */
+.tk-escape {
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0 0.15em;
+}
+
+/* ── a sample, and what it printed ── */
+
+.sample { margin: 0 0 1.5rem; }
+.sample .code { border-radius: 5px 5px 0 0; }
+
+.sample figcaption {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 0.45rem 1.1rem;
+  border-inline: 1px solid var(--rule);
+  background: var(--bg-soft);
+}
+
+.sample figcaption .filename { color: var(--fg); }
+.sample figcaption .cmd { background: none; padding: 0; }
+
+.output { border-radius: 0 0 5px 5px; background: var(--bg-soft); }
+.output code { color: var(--fg); white-space: pre-wrap; }
+
+.diagnostic {
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-soft);
+}
+
+/* ── the marks table ── */
+
+.marks-table { border-collapse: collapse; margin: 0 0 1.5rem; font-size: 0.95rem; }
+.marks-table td { padding: 0.3rem 1.25rem 0.3rem 0; vertical-align: baseline; }
+.marks-table td:first-child { font-family: var(--mono); white-space: nowrap; }
+.marks-table code { background: none; padding: 0; font-size: 0.95rem; }
+
+/* ── the live panel ── */
+
+.marks { margin: 2rem 0 0; }
+
+.marks-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.marks-input, .marks-out {
+  min-height: 15rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+.marks-input {
+  background: var(--bg-soft);
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  padding: 1rem 1.1rem;
+  resize: vertical;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+.marks-input:focus {
+  outline: 1px solid var(--green-line);
+  outline-offset: -1px;
+  color: var(--fg);
+}
+
+.marks-out { margin: 0; white-space: pre-wrap; }
+.marks-note { font-size: 0.85rem; color: var(--muted); margin: 0.75rem 0 0; }
+
+/* ── the rest ── */
+
+.engines { margin: 0 0 1.15rem; padding-left: 1.1rem; }
+.engines li { margin-bottom: 0.85rem; }
+.engines strong { color: var(--name); font-weight: 600; }
+
+blockquote {
+  margin: 0 0 1.15rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--rule);
+  color: var(--muted);
+}
+
+blockquote footer { font-family: var(--mono); font-size: 0.8rem; }
+
+.site-footer {
+  margin-top: 4.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.site-footer p { margin: 0 0 0.4rem; }
+.fine { font-size: 0.78rem; }
+.sep { color: var(--rule); }
+
+/* Before the WebAssembly arrives, and if it never does. */
+.fallback { max-width: var(--measure); margin-inline: auto; padding: 5rem 1.5rem; }
+.fallback h1 { font-size: 3rem; margin: 0 0 1.25rem; letter-spacing: -0.04em; }
+
+@media (max-width: 60rem) {
+  .hero-inner { grid-template-columns: 1fr; gap: 2.5rem; padding-block: 4rem; }
+  .hero { min-height: 0; }
+  .scrim {
+    background:
+      linear-gradient(180deg, rgba(4, 7, 10, 0.72), rgba(4, 7, 10, 0.42) 45%, var(--bg)),
+      radial-gradient(110% 60% at 70% 30%, rgba(62, 224, 138, 0.14), transparent 60%);
+  }
+}
+
+@media (max-width: 44rem) {
+  .marks-panes { grid-template-columns: 1fr; }
+  .marks-input { min-height: 9rem; }
+}

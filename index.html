@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Xag</title>
+<meta name="description" content="Xag is a compiled programming language with Rust-style ownership checked at compile time. A size is always written: there is no int on its own, because there is no size to assume. Early work in progress." />
+<link rel="canonical" href="https://xag-lang.com/" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#04070a" />
+
+<link data-trunk rel="css" href="styles/main.css" />
+<link data-trunk rel="rust" data-wasm-opt="0" />
+</head>
+<body>
+
+<!-- The page is rendered by WebAssembly. What follows is here so that anything
+     which does not run it — a crawler, a reader with scripting off — is still
+     told the true thing rather than nothing at all. The app removes it once it
+     has mounted. -->
+<div id="fallback" class="fallback">
+  <h1>Xag</h1>
+  <p>
+    A programming language built around high performance, helpful error messages,
+    and Rust-style memory management. A size is always written: there is no
+    <code>int</code> on its own, because there is no size to assume. Programs are
+    compiled ahead of time, either to native code or to a form run by an AOT
+    interpreter.
+  </p>
+  <p class="warning">Early work in progress — nothing here is stable yet.</p>
+  <p>
+    <a href="https://github.com/Artificial-IntelligenceAI/Xag-lang">The compiler
+    on GitHub</a> — building from source is the way to run it. There is no
+    install yet.
+  </p>
+  <noscript>
+    <p class="warning">
+      The rest of this page is rendered by WebAssembly, which needs scripting
+      switched on. Everything it says is in the repository's README as well.
+    </p>
+  </noscript>
+</div>
+
+</body>
+</html>

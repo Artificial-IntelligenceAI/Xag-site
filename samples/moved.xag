@@ -1,0 +1,12 @@
+# Deliberately wrong, so the compiler has something to say.
+# `keep` takes the text for good, so nothing is left behind to print.
+
+fn.nothing keep [str 'text'] {
+    print.stdout['text' \n];
+}
+
+START {
+    var.str 'greeting' = [*hello*];
+    keep[move 'greeting'];
+    print.stdout['greeting' \n];
+}
