@@ -52,8 +52,9 @@ paraphrasing.
   always written — there is no `int` on its own, because there is no size to
   assume. Error messages that explain themselves.
 - **The two marks.** `'name'` is a variable, `*written value*` is a literal, and
-  a bare word is a function, a type or a segment of a chain. There are only two
-  marks and there will only ever be two.
+  a bare word is a type, a segment of a chain, or a function being called. Every
+  declaration marks the name it gives, a function's and a struct's included.
+  There are only two marks and there will only ever be two.
 - **Dot-chained declarations.** What is unusual about a name lives in the chain
   that declares it: `var.mut.many.int64 'xs'`. The default is always the least
   powerful thing, so a word appears only where there was a choice.
@@ -99,6 +100,14 @@ So the rule is not that measurements are unreliable. It is that a number is
 about the afternoon it was taken on, and a page has no way of saying so. The
 compiler repo keeps `bench/run.py` for asking the question again; the site
 should keep the answer off the pages and point at the question instead.
+
+The same thing happens to syntax, and faster. On 2026-09-06 declarations began
+marking the names they give, so `fn.int64 sum-to` became `fn.int64 'sum-to'`
+and every sample on the site was wrong in the same instant — along with the
+sentence above describing what a bare word is. Nothing looked broken. This is
+why the rule is to run every sample rather than to copy one: a program that is
+run says whether it still works, and a program that is pasted only says what
+was true when somebody pasted it.
 
 ## Voice
 

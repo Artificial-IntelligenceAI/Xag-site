@@ -585,7 +585,7 @@ fn Philosophy() -> impl IntoView {
                     </tr>
                     <tr>
                         <td><code class="tk-word">"word"</code></td>
-                        <td>"a function, a type, or a segment of a chain"</td>
+                        <td>"a type, a segment of a chain, or a function being called"</td>
                     </tr>
                 </tbody>
             </table>
@@ -594,6 +594,12 @@ fn Philosophy() -> impl IntoView {
                  re-read as a value because of where it happens to sit — position is
                  never consulted."
             </p>
+            <p>
+                "Every declaration marks the name it gives, including a function's
+                 and a struct's. What is being named is marked; what is being used is
+                 whatever it was declared as."
+            </p>
+            <Code src="fn.int64 'sum-to' [int64 'n'] { give ['n']; }".to_string() />
             <p>
                 "There is no third mark for text versus number, because the type
                  already answers that: "<code class="tk-value">"*1000*"</code>" is a

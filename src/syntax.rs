@@ -245,6 +245,31 @@ mod tests {
         assert_eq!(kinds("*a\\nb*"), vec![(Kind::Value, "*a\\nb*".into())]);
     }
 
+    /// A declaration marks the name it gives, so a function's name is a name
+    /// where it is declared and a bare word where it is called. The tokeniser
+    /// needed nothing added for this — it already coloured what it was shown,
+    /// which is the point of there being only two marks.
+    #[test]
+    fn a_declared_name_is_a_name_even_when_it_names_a_function() {
+        assert_eq!(
+            kinds("fn.int64 'sum-to' [int64 'n']"),
+            vec![
+                (Kind::Word, "fn".into()),
+                (Kind::Punct, ".".into()),
+                (Kind::Word, "int64".into()),
+                (Kind::Name, "'sum-to'".into()),
+                (Kind::Punct, "[".into()),
+                (Kind::Word, "int64".into()),
+                (Kind::Name, "'n'".into()),
+                (Kind::Punct, "]".into()),
+            ]
+        );
+
+        // And calling it is a bare word, as it always was.
+        assert_eq!(kinds("sum-to['LIMIT']")[0], (Kind::Word, "sum-to".into()));
+        assert_eq!(kinds("struct 'point' [int64 'x']")[1].0, Kind::Name);
+    }
+
     #[test]
     fn a_name_may_hold_anything_at_all() {
         assert_eq!(
