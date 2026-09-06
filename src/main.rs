@@ -331,7 +331,19 @@ fn theme_for_host() -> route::Theme {
     route::default_theme(&host)
 }
 
-/// Puts the theme on the document, remembers it, and starts or stops the sky.
+/// Writes down a theme the reader picked. Only a choice is written: a theme
+/// that came from the address or from the domain is not one, and storing those
+/// made the first `/alien` link opened on `xag-lang.org` overrule that domain's
+/// own palette on every visit after it, because a stored theme outranks a host.
+fn remember_theme(theme: route::Theme) {
+    if let Some(store) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) {
+        let _ = store.set_item(THEME_KEY, theme.slug());
+    }
+}
+
+/// Puts the theme on the document and starts or stops the sky. It does not
+/// remember it: see `remember_theme`, which is called only where a reader
+/// actually chose.
 ///
 /// Solarized Dark is a palette somebody else settled, and the point of asking
 /// for it is to get it rather than to get this site wearing it. So the sky
@@ -350,10 +362,6 @@ fn apply_theme(theme: route::Theme) {
                 let _ = root.remove_attribute("data-theme");
             }
         }
-    }
-
-    if let Some(store) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) {
-        let _ = store.set_item(THEME_KEY, theme.slug());
     }
 
     if theme.has_sky() {
@@ -383,6 +391,7 @@ fn ThemePicker(theme: ReadSignal<route::Theme>, set_theme: WriteSignal<route::Th
                 id="theme-pick"
                 on:change=move |ev| {
                     if let Some(picked) = route::Theme::from_slug(&event_target_value(&ev)) {
+                        remember_theme(picked);
                         set_theme.set(picked);
                     }
                 }
