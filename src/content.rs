@@ -66,10 +66,11 @@ pub struct Page {
     pub sections: &'static [Section],
 }
 
-pub const PAGES: [Page; 3] = [HOME, PHILOSOPHY, CREDITS];
+pub const PAGES: [Page; 4] = [HOME, QUESTIONS_PAGE, PHILOSOPHY, CREDITS];
 
 pub fn page(slug: &str) -> &'static Page {
     match slug {
+        "questions" => &QUESTIONS_PAGE,
         "philosophy" => &PHILOSOPHY,
         "credits" => &CREDITS,
         _ => &HOME,
@@ -89,11 +90,6 @@ pub const HOME: Page = Page {
            because there is no size to assume. Programs are compiled ahead of time, \
            either to native code or to a form run by an AOT interpreter.",
     sections: &[
-        Section {
-            id: "questions",
-            heading: "Questions",
-            blocks: &[Block::Questions],
-        },
         Section {
             id: "reading",
             heading: "Reading a program",
@@ -169,6 +165,23 @@ pub const HOME: Page = Page {
             ],
         },
     ],
+};
+
+// ──────────────────────────── Questions ─────────────────────────────
+
+pub const QUESTIONS_PAGE: Page = Page {
+    slug: "questions",
+    title: "Questions — Xag",
+    summary: "Things a reader might reasonably think about Xag, and what there \
+              is to say to them.",
+    lede: "Things somebody might reasonably think, and what there is to say to \
+           them. The blocks on the front page ask these; this is where they are \
+           answered.",
+    sections: &[Section {
+        id: "asked",
+        heading: "Asked",
+        blocks: &[Block::Questions],
+    }],
 };
 
 // ──────────────────────────── Philosophy ────────────────────────────
@@ -402,7 +415,7 @@ pub struct Question {
     pub answer: &'static [&'static str],
 }
 
-pub const QUESTIONS: [Question; 1] = [Question {
+pub const QUESTIONS: [Question; 2] = [Question {
     id: "only-positives",
     asked: "I've seen languages with only positives. No negatives.",
     short: "They most likely have flaws, but weren't written down.",
@@ -410,6 +423,15 @@ pub const QUESTIONS: [Question; 1] = [Question {
         "To be honest too, we didn't write down all flaws of Xag, but we did \
          write down the most major. At least we wrote them down. We don't want \
          you to regret our language.",
+    ],
+}, Question {
+    id: "performed-honesty",
+    asked: "Is the \"honesty\" performed?",
+    short: "Answering honestly. No, it isn't.",
+    answer: &[
+        "Though, you don't have to believe us. Wait, why the fuck does that \
+         sound like guilt-tripping? 🤣. Oh shit, now this sounds like fake \
+         casualness? Whatever 🤣",
     ],
 }];
 

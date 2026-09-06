@@ -157,21 +157,35 @@ fn Marks() -> impl IntoView {
     }
 }
 
-/// Scrolls to a section once the page holding it is in the document.
+/// Puts the reader at a section, and keeps them there while the page settles.
 ///
-/// Two cases, and they need different things. A card pointing at the page the
-/// reader is already on finds its section straight away, because it never left.
-/// A card pointing at another page does not: setting the signal does not put
-/// the new view in the document in the same breath — measured, it is still
-/// absent on the next line and present one task later — so the timeout is what
-/// does the work there.
+/// Scrolling once is not enough on arrival. The app is still building — the
+/// sky, the panels, the type — so the section moves after it has been scrolled
+/// to, and the reader ends up above it. So this scrolls, measures where the
+/// section actually ended up, and scrolls again until that stops changing.
 ///
 /// It deliberately does not wait for an animation frame. A hidden or throttled
 /// page is handed no frames at all, and a jump that quietly does nothing is
 /// worse than one that happens a beat late.
 fn go_to(anchor: impl Into<String>) {
-    let anchor = anchor.into();
-    if scroll_to(&anchor) {
+    settle(anchor.into(), 0, f64::NAN);
+}
+
+/// About a second of that, in sixteen-millisecond steps: long enough for
+/// anything the page is going to do to it, short enough that a wrong anchor is
+/// not a page that twitches for ever.
+fn settle(anchor: String, tries: u32, was_at: f64) {
+    const GIVE_UP_AFTER: u32 = 60;
+
+    let here = scroll_to(&anchor);
+
+    // Twice in the same place means the page has stopped moving under us.
+    let settled = match (here, was_at.is_nan()) {
+        (Some(now), false) => (now - was_at).abs() < 0.5,
+        _ => false,
+    };
+
+    if settled || tries >= GIVE_UP_AFTER {
         return;
     }
 
@@ -179,25 +193,21 @@ fn go_to(anchor: impl Into<String>) {
     use wasm_bindgen::JsCast;
 
     let Some(win) = web_sys::window() else { return };
-    let again = Closure::once_into_js(move || {
-        scroll_to(&anchor);
-    });
+    let at = here.unwrap_or(f64::NAN);
+    let again = Closure::once_into_js(move || settle(anchor, tries + 1, at));
     let _ = win.set_timeout_with_callback_and_timeout_and_arguments_0(
         again.as_ref().unchecked_ref(),
-        0,
+        16,
     );
 }
 
-/// Says whether it found the thing it was asked to scroll to.
-fn scroll_to(anchor: &str) -> bool {
-    let Some(el) = web_sys::window()
-        .and_then(|w| w.document())
-        .and_then(|d| d.get_element_by_id(anchor))
-    else {
-        return false;
-    };
+/// Scrolls to it if it is there, and says where on the page it turned out to
+/// be — which is the thing that tells us whether the page is still moving.
+fn scroll_to(anchor: &str) -> Option<f64> {
+    let win = web_sys::window()?;
+    let el = win.document()?.get_element_by_id(anchor)?;
     el.scroll_into_view();
-    true
+    Some(el.get_bounding_client_rect().top() + win.scroll_y().unwrap_or(0.0))
 }
 
 /// The warp, and what the name turns out to stand for.
@@ -362,14 +372,16 @@ enum Page {
     Home,
     Download,
     Docs,
+    Questions,
     Philosophy,
     Credits,
 }
 
-const PAGES: [Page; 5] = [
+const PAGES: [Page; 6] = [
     Page::Home,
     Page::Download,
     Page::Docs,
+    Page::Questions,
     Page::Philosophy,
     Page::Credits,
 ];
@@ -380,6 +392,7 @@ impl Page {
             Page::Home => "Home",
             Page::Download => "Download",
             Page::Docs => "Docs",
+            Page::Questions => "Questions",
             Page::Philosophy => "Design Philosophy",
             Page::Credits => "Credits, License, Source",
         }
@@ -391,6 +404,7 @@ impl Page {
     fn slug(self) -> &'static str {
         match self {
             Page::Home => "",
+            Page::Questions => "questions",
             Page::Philosophy => "philosophy",
             Page::Credits => "credits",
             Page::Download | Page::Docs => "",
@@ -401,6 +415,7 @@ impl Page {
     /// address should land somewhere rather than nowhere.
     fn from_slug(slug: &str) -> Page {
         match slug {
+            "questions" => Page::Questions,
             "philosophy" => Page::Philosophy,
             "credits" => Page::Credits,
             _ => Page::Home,
@@ -638,8 +653,10 @@ fn App() -> impl IntoView {
                             <button
                                 class="card asks"
                                 on:click=move |_| {
-                                    set_page.set(Page::Home);
-                                    write_address(theme.get_untracked(), Page::Home, Some(q.id), true);
+                                    set_page.set(Page::Questions);
+                                    write_address(
+                                        theme.get_untracked(), Page::Questions, Some(q.id), true,
+                                    );
                                     go_to(q.id);
                                 }
                             >
@@ -714,7 +731,7 @@ fn main() {
                 if let Some(win) = web_sys::window() {
                     let _ = win.set_timeout_with_callback_and_timeout_and_arguments_0(
                         wasm_bindgen::JsCast::unchecked_ref(restore.as_ref()),
-                        60,
+                        1200,
                     );
                 }
             }

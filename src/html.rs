@@ -219,6 +219,7 @@ fn nav(here: &str, theme: Option<&str>) -> String {
         };
         let label = match page.slug {
             "" => "Home",
+            "questions" => "Questions",
             "philosophy" => "Design Philosophy",
             "credits" => "Credits, License, Source",
             other => other,
