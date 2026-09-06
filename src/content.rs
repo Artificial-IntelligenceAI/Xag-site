@@ -468,7 +468,7 @@ pub struct Question {
     pub answer: &'static [&'static str],
 }
 
-pub const QUESTIONS: [Question; 2] = [Question {
+pub const QUESTIONS: [Question; 3] = [Question {
     id: "only-positives",
     asked: "I've seen languages with only positives. No negatives.",
     short: "They most likely have flaws, but weren't written down.",
@@ -485,6 +485,34 @@ pub const QUESTIONS: [Question; 2] = [Question {
         "Though, you don't have to believe us. Wait, why the fuck does that \
          sound like guilt-tripping? 🤣. Oh shit, now this sounds like fake \
          casualness? Whatever 🤣",
+    ],
+}, Question {
+    id: "what-is-missing",
+    asked: "What major things does Xag not have, that others do?",
+    short: "More than one file, a standard library, and any way to reuse a shape.",
+    answer: &[
+        "A program is one file. `export` and `program` are words the lexer \
+         knows and the parser refuses, so there are no modules, no imports and \
+         no libraries — not other people's, not your own.",
+        "What a program can reach is `print.stdout`, `read.stdin`, the \
+         arguments it was handed, and a few words that count or fill a list. \
+         No files, no network, no clock, no randomness, no square root.",
+        "Nothing turns a number into text. Handing an `int64` to a `str` is \
+         refused, and nothing is provided that does the turning.",
+        "A `many` is a fixed length, settled where it is made. It holds one \
+         level — a `many` of a `many` is refused — and it cannot be printed \
+         whole.",
+        "There are no generics, no interfaces, no traits and no methods. A \
+         function that works for two types is written twice.",
+        "There are no threads and nothing asynchronous. There is no way to \
+         call C, and none for C to call it.",
+        "The tooling is one binary. No package manager, no formatter, no \
+         language server, no editor support, no debugger.",
+        "Each of those was checked against the compiler rather than read off a \
+         plan, which means the list is only as current as the day it was \
+         written. Some of them are decisions nobody has made and some are \
+         simply not built, and this page does not say which, because saying so \
+         would be a promise about work rather than a fact about the language.",
     ],
 }];
 
