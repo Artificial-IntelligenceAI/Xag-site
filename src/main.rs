@@ -169,8 +169,9 @@ fn Marks() -> impl IntoView {
 /// It deliberately does not wait for an animation frame. A hidden or throttled
 /// page is handed no frames at all, and a jump that quietly does nothing is
 /// worse than one that happens a beat late.
-fn go_to(anchor: &'static str) {
-    if scroll_to(anchor) {
+fn go_to(anchor: impl Into<String>) {
+    let anchor = anchor.into();
+    if scroll_to(&anchor) {
         return;
     }
 
@@ -179,7 +180,7 @@ fn go_to(anchor: &'static str) {
 
     let Some(win) = web_sys::window() else { return };
     let again = Closure::once_into_js(move || {
-        scroll_to(anchor);
+        scroll_to(&anchor);
     });
     let _ = win.set_timeout_with_callback_and_timeout_and_arguments_0(
         again.as_ref().unchecked_ref(),
@@ -221,6 +222,13 @@ fn WarpOverlay() -> impl IntoView {
             <span class="warp-dismiss">"click anywhere, or press escape"</span>
         </div>
     }
+}
+
+/// The section named in the address, if one is.
+fn anchor_now() -> Option<String> {
+    let hash = web_sys::window()?.location().hash().ok()?;
+    let named = hash.trim_start_matches('#');
+    (!named.is_empty()).then(|| named.to_string())
 }
 
 /// What the address bar currently says.
@@ -565,7 +573,11 @@ fn App() -> impl IntoView {
     // Whatever the address said or left out, it says all of it from here on —
     // replacing rather than pushing, so arriving does not leave a step behind
     // it that Back would walk into.
-    write_address(starts_as, opened_at, None, false);
+    // Whatever the address said or left out, it says all of it from here on —
+    // including the section, which the first version of this dropped, so a
+    // refresh lost the place it was refreshing.
+    let arrived_at = anchor_now();
+    write_address(starts_as, opened_at, arrived_at.as_deref(), false);
     follow_history(set_page, set_theme);
 
     // Runs on mount as well as on every change, so a reader who chose Solarized
@@ -579,7 +591,10 @@ fn App() -> impl IntoView {
         if now != route::Theme::Alien {
             warp::close();
         }
-        write_address(now, page.get_untracked(), None, false);
+        // Keeping whatever section is being read: a change of palette is not a
+        // change of place, and this runs on mount as well, where dropping it
+        // would undo the address the reader arrived on.
+        write_address(now, page.get_untracked(), anchor_now().as_deref(), false);
     });
 
     view! {
@@ -665,7 +680,51 @@ fn main() {
         el.remove();
     }
 
+    // The document the browser scrolled is about to be thrown away and built
+    // again, so whatever position it remembers is a position in something that
+    // no longer exists. We put the reader back ourselves, below.
+    if let Some(history) = web_sys::window().and_then(|w| w.history().ok()) {
+        let _ = history.set_scroll_restoration(web_sys::ScrollRestoration::Manual);
+    }
+
+    let arrived_at = anchor_now();
+
     leptos::mount::mount_to_body(App);
+
+    // Back to where the address said, once the app has built the page that
+    // has it. Without this a refresh lands wherever the old document's
+    // scroll happened to leave the new one.
+    match arrived_at {
+        Some(anchor) => {
+            // Instantly, not smoothly. Sliding down the page on a refresh is a
+            // journey the reader did not ask to take; they were already there.
+            use wasm_bindgen::JsCast as _;
+            let root = web_sys::window()
+                .and_then(|w| w.document())
+                .and_then(|d| d.document_element())
+                .and_then(|e| e.dyn_into::<web_sys::HtmlElement>().ok());
+            if let Some(root) = root.as_ref() {
+                let _ = root.style().set_property("scroll-behavior", "auto");
+            }
+            go_to(anchor);
+            if let Some(root) = root {
+                let restore = wasm_bindgen::closure::Closure::once_into_js(move || {
+                    let _ = root.style().remove_property("scroll-behavior");
+                });
+                if let Some(win) = web_sys::window() {
+                    let _ = win.set_timeout_with_callback_and_timeout_and_arguments_0(
+                        wasm_bindgen::JsCast::unchecked_ref(restore.as_ref()),
+                        60,
+                    );
+                }
+            }
+        }
+        None => {
+            if let Some(win) = web_sys::window() {
+                win.scroll_to_with_x_and_y(0.0, 0.0);
+            }
+        }
+    }
 
     // The rocks are drawn by the markup above and moved by this.
     space::animate();
