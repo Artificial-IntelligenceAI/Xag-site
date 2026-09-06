@@ -695,9 +695,10 @@ fn Credits() -> impl IntoView {
                 <a href=REPO>{REPO}</a>
             </p>
             <p>
-                "Wrong diagnostics, confusing ones, and anything Xag accepts that it
-                 should not are worth reporting: "
-                <a href=format!("{REPO}/issues")>{format!("{REPO}/issues")}</a>
+                "A diagnostic that is wrong, a diagnostic that is confusing, and a
+                 program Xag accepts that it should not are all the same kind of bug:
+                 the compiler saying something untrue. They belong in "
+                <a href=format!("{REPO}/issues")>"the issue tracker"</a>"."
             </p>
             <p>
                 "This site is a Rust program compiled to WebAssembly. Its source is "
@@ -803,10 +804,10 @@ fn App() -> impl IntoView {
                         }}
                     </h1>
                     <p class="tagline">
-                        <span>"Dot-chained"</span>
+                        <span>"Dot-Chained Syntax"</span>
                         <span>"Safe"</span>
-                        <span>"Excellent runtime performance"</span>
-                        <span>"Slow compilation time"</span>
+                        <span>"Excellent Runtime Performance"</span>
+                        <span>"Slow Compilation Time"</span>
                     </p>
                     <p class="warning">"Early work in progress — nothing here is stable yet."</p>
                     <a class="cta" href="#building">"Build from source"</a>
