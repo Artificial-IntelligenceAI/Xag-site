@@ -22,6 +22,12 @@
   --name: #3ee08a;
   --value: #e0a94a;
 
+  /* A third pair, and a different question: not what a piece of Xag is, but
+   * whether a claim about the language is a thing to want. Only the tagline
+   * asks it, and only four lines of it. */
+  --good: #3ee08a;
+  --cost: #ff6b5e;
+
   --green-dim: rgba(62, 224, 138, 0.14);
   --green-line: rgba(62, 224, 138, 0.22);
 
@@ -121,6 +127,11 @@ body {
 /* One to a line, said deliberately rather than left to wherever the measure
  * happens to run out. */
 .tagline span { display: block; }
+
+/* What the language gives you, and what it charges. Every theme answers this,
+ * in its own green and its own red. */
+.tagline .good { color: var(--good); }
+.tagline .cost { color: var(--cost); }
 
 .hero .warning {
   display: block;
@@ -673,6 +684,9 @@ button.dock-item:hover { color: var(--fg); background: var(--green-dim); }
       --name: color(display-p3 0.12 1 0.46);
       --value: color(display-p3 1 0.66 0.13);
 
+      --good: color(display-p3 0.12 1 0.46);
+      --cost: color(display-p3 1 0.36 0.3);
+
       --green-dim: color(display-p3 0.12 1 0.46 / 0.16);
       --green-line: color(display-p3 0.12 1 0.46 / 0.3);
     }
@@ -900,6 +914,9 @@ button.wordmark:focus-visible {
 
   --emph: #93a1a1;
   --on-accent: #002b36;
+
+  --good: #859900;
+  --cost: #dc322f;
 }
 
 /* The same sixteen the other way up. Only the six greys are exchanged — the
@@ -922,6 +939,9 @@ button.wordmark:focus-visible {
 
   --emph: #586e75;
   --on-accent: #fdf6e3;
+
+  --good: #859900;
+  --cost: #dc322f;
 }
 
 /* No sky. `space::pause` stops the frame loop as well; this is only so that
@@ -1072,6 +1092,10 @@ button.wordmark:focus-visible {
 
   --emph: #ffffff;
   --on-accent: #06070a;
+
+  /* Muted, so they read as marks on metal rather than as traffic lights. */
+  --good: #7fd8a6;
+  --cost: #f08578;
 }
 
 /* The rocks are ore rather than moss. */

@@ -361,6 +361,18 @@ pub const CREDITS: Page = Page {
     ],
 };
 
+/// What the language is like, and whether each of them is a thing to want.
+///
+/// The last one is not a boast and is not written as one. A language that says
+/// where it is expensive is easier to believe about everything else, which is
+/// the whole reason it is on the front page rather than left out.
+pub const TAGLINE: [(&str, bool); 4] = [
+    ("Dot-Chained Syntax", true),
+    ("Safe", true),
+    ("Excellent Runtime Performance", true),
+    ("Slow Compilation Time", false),
+];
+
 /// The three things a piece of Xag can be, and what each is.
 pub const MARKS: [(&str, &str, &str); 3] = [
     ("tk-name", "'…'", "a **name**"),
@@ -374,6 +386,16 @@ mod tests {
 
     /// Every page has to be reachable and describable, or the built HTML has
     /// nothing to put in a title or a description.
+    /// It is a claim about the language either way, so each has to say which
+    /// it is — a line that is neither is a line nobody knows how to read.
+    #[test]
+    fn the_tagline_says_which_of_its_claims_are_good() {
+        assert_eq!(TAGLINE.len(), 4);
+        assert!(TAGLINE.iter().any(|(_, good)| *good), "none of it is good");
+        assert!(TAGLINE.iter().any(|(_, good)| !*good), "none of it is a cost");
+        assert!(TAGLINE.iter().all(|(text, _)| !text.is_empty()));
+    }
+
     #[test]
     fn every_page_says_what_it_is() {
         for page in PAGES.iter() {

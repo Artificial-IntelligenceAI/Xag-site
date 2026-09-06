@@ -625,10 +625,9 @@ fn App() -> impl IntoView {
                         }}
                     </h1>
                     <p class="tagline">
-                        <span>"Dot-Chained Syntax"</span>
-                        <span>"Safe"</span>
-                        <span>"Excellent Runtime Performance"</span>
-                        <span>"Slow Compilation Time"</span>
+                        {content::TAGLINE.iter().map(|(text, good)| view! {
+                            <span class=if *good { "good" } else { "cost" }>{*text}</span>
+                        }).collect_view()}
                     </p>
                     <p class="warning">
                         "Under development, don't treat this website's info as "

@@ -142,8 +142,9 @@ pub fn document(
 </head>
 <body>
 <div id="fallback">
-<header class="hero compact"><div class="hero-inner"><div class="hero-words">
+<header class="hero{compact}"><div class="hero-inner"><div class="hero-words">
 <h1><span class="wordmark">Xag</span></h1>
+{tagline}
 <p class="warning">Under development, don&#39;t treat this website&#39;s info as <a href="{repo}">truth</a>.</p>
 </div></div></header>
 <main>{body}</main>
@@ -163,11 +164,27 @@ init({{ module_or_path: '/{wasm}' }});
         canonical = escape(canonical),
         repo = crate::content::REPO,
         body = body(page),
+        // The front page stands full height and says what the language is like;
+        // the others have already been arrived at.
+        compact = if page.slug.is_empty() { "" } else { " compact" },
+        tagline = if page.slug.is_empty() { tagline() } else { String::new() },
         nav = nav(page.slug, theme),
         css = css,
         js = js,
         wasm = wasm,
     )
+}
+
+/// What the language is like, on the front page only — the others are already
+/// somewhere, and do not need telling what they arrived at.
+fn tagline() -> String {
+    let mut out = String::from("<p class=\"tagline\">");
+    for (text, good) in crate::content::TAGLINE.iter() {
+        let class = if *good { "good" } else { "cost" };
+        out.push_str(&format!("<span class=\"{class}\">{}</span>", escape(text)));
+    }
+    out.push_str("</p>");
+    out
 }
 
 /// Links to the other pages, so a crawler can find them and a reader without
