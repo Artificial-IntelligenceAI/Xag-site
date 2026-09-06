@@ -166,9 +166,11 @@ opens in silver, `.com` in alien. It is the last word in the order, not the
 first — an address that names a theme wins, and so does a choice the reader
 made on a previous visit.
 
-`xag-lang.com` and `xag-lang.org` are both registered. The `.com` is canonical
-and is what `index.html` names; pointing the `.org` at it is a redirect for
-whatever ends up serving the site. Nothing is deployed yet.
+[xag-lang.com](https://xag-lang.com) and [xag-lang.org](https://xag-lang.org)
+are both live, and so is `www` on each. They are four custom domains on one
+Pages project rather than a redirect: every host serves the same documents, and
+every document names `https://xag-lang.com/alien` as its canonical, so the four
+are one page to anything indexing them.
 
 ## Licence
 
