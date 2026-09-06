@@ -80,13 +80,12 @@ jobs:
             exit 1
           fi
           for f in _headers _redirects index.html robots.txt sitemap.xml llms.txt \
-                   alien/index.html alien/philosophy/index.html \
-                   lite2/credits/index.html; do
+                   alien.html alien/philosophy.html lite2/credits.html; do
             test -f "dist/$f" || { echo "::error::dist/$f is missing"; exit 1; }
           done
 
           # The point of the whole exercise: the words have to be in the HTML.
-          grep -q "Two marks, and only two" dist/alien/philosophy/index.html \
+          grep -q "Two marks, and only two" dist/alien/philosophy.html \
             || { echo "::error::the prose did not make it into the built HTML"; exit 1; }
           grep -q "User-agent" dist/robots.txt \
             || { echo "::error::robots.txt is not a robots file"; exit 1; }

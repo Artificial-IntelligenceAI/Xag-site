@@ -97,10 +97,18 @@ fn canonical_of(slug: &str) -> String {
     }
 }
 
+/// Writes `alien/philosophy.html` rather than `alien/philosophy/index.html`.
+///
+/// Both are served at the same address, but a directory index makes the host
+/// redirect `/alien/philosophy` to `/alien/philosophy/` first — a hop, and an
+/// address that no longer matches the one the app writes into the bar or the
+/// one named as canonical. A file named for the route is served as it is.
 fn write(dist: &Path, path: &str, body: &str) {
-    let dir = dist.join(path);
-    fs::create_dir_all(&dir).unwrap_or_else(|e| fail(&format!("cannot make {}: {e}", dir.display())));
-    let file = dir.join("index.html");
+    let file = dist.join(format!("{path}.html"));
+    if let Some(dir) = file.parent() {
+        fs::create_dir_all(dir)
+            .unwrap_or_else(|e| fail(&format!("cannot make {}: {e}", dir.display())));
+    }
     fs::write(&file, body).unwrap_or_else(|e| fail(&format!("cannot write {}: {e}", file.display())));
 }
 
