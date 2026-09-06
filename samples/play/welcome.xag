@@ -1,0 +1,14 @@
+# This runs in your browser, on a small interpreter written for this website.
+# It is not the compiler, and it knows only a little of the language.
+
+const.int64 'LIMIT' = [*10*];
+
+START {
+    var.mut.int64 'total' = [*0*];
+
+    loop.range.int64 'i' = [*1*, 'LIMIT'] {
+        set 'total' = ['total' + 'i'];
+    }
+
+    print.stdout[str:*sum to * 'LIMIT' str:* = * 'total' \n];
+}

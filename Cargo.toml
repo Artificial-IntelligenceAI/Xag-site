@@ -22,6 +22,13 @@ name = "prerender"
 path = "src/prerender.rs"
 required-features = ["prerender"]
 
+# Checks the playground against the real compiler. Needs `xagc`, so it is not
+# part of any build.
+[[bin]]
+name = "verify-play"
+path = "src/verify_play.rs"
+required-features = ["prerender"]
+
 [features]
 prerender = []
 

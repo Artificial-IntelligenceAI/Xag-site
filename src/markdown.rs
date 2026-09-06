@@ -34,6 +34,16 @@ fn block(b: &Block, out: &mut String) {
                 }
             }
         }
+        Block::PlainList(items) => {
+            for item in items.iter() {
+                out.push_str(&format!("- {}\n", to_markdown(item)));
+            }
+            out.push('\n');
+        }
+        Block::Playground => out.push_str(
+            "*(There is an editor here on the page, running a small interpreter in \
+             the browser. It is not the compiler.)*\n\n",
+        ),
         Block::MarksTable => {
             out.push_str("| written | is |\n| --- | --- |\n");
             for (_, mark, meaning) in MARKS.iter() {

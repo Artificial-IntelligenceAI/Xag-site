@@ -400,15 +400,17 @@ enum Page {
     Download,
     Docs,
     Questions,
+    Playground,
     Philosophy,
     Credits,
 }
 
-const PAGES: [Page; 6] = [
+const PAGES: [Page; 7] = [
     Page::Home,
     Page::Download,
     Page::Docs,
     Page::Questions,
+    Page::Playground,
     Page::Philosophy,
     Page::Credits,
 ];
@@ -420,6 +422,7 @@ impl Page {
             Page::Download => "Download",
             Page::Docs => "Docs",
             Page::Questions => "Questions",
+            Page::Playground => "Playground",
             Page::Philosophy => "Design Philosophy",
             Page::Credits => "Credits, License, Source",
         }
@@ -432,6 +435,7 @@ impl Page {
         match self {
             Page::Home => "",
             Page::Questions => "questions",
+            Page::Playground => "playground",
             Page::Philosophy => "philosophy",
             Page::Credits => "credits",
             Page::Download | Page::Docs => "",
@@ -443,6 +447,7 @@ impl Page {
     fn from_slug(slug: &str) -> Page {
         match slug {
             "questions" => Page::Questions,
+            "playground" => Page::Playground,
             "philosophy" => Page::Philosophy,
             "credits" => Page::Credits,
             _ => Page::Home,
@@ -508,6 +513,55 @@ fn Dock(
     view! { <nav class="dock" aria-label="Sections">{items}</nav> }
 }
 
+/// A little Xag, run in the browser.
+///
+/// Not the compiler — see `play.rs`, which says so at more length. The page it
+/// sits on says so too, above and below it.
+#[component]
+fn Playground() -> impl IntoView {
+    let (source, set_source) = signal(include_str!("../samples/play/welcome.xag").to_string());
+    let (result, set_result) = signal(None::<Result<String, String>>);
+
+    let run = move |_| set_result.set(Some(xag_site::play::run(&source.get_untracked())));
+
+    view! {
+        <div class="play">
+            <textarea
+                class="play-in"
+                spellcheck="false"
+                autocapitalize="off"
+                aria-label="Xag to run"
+                prop:value=move || source.get()
+                on:input=move |ev| set_source.set(event_target_value(&ev))
+            ></textarea>
+
+            <div class="play-bar">
+                <button class="play-run" on:click=run>"Run"</button>
+                <span class="play-note">"in your browser, on a small interpreter"</span>
+            </div>
+
+            {move || match result.get() {
+                None => view! {
+                    <pre class="play-out waiting"><code>"Press Run."</code></pre>
+                }.into_any(),
+                Some(Ok(out)) if out.is_empty() => view! {
+                    <pre class="play-out"><code>"It ran, and printed nothing."</code></pre>
+                }.into_any(),
+                Some(Ok(out)) => view! {
+                    <pre class="play-out"><code>{out}</code></pre>
+                }.into_any(),
+                Some(Err(why)) => view! {
+                    <pre class="play-out stopped"><code>
+                        {why}
+                        "\n\nThis is the playground's own wording, not the compiler's. \
+                         The compiler would say more, and better."
+                    </code></pre>
+                }.into_any(),
+            }}
+        </div>
+    }
+}
+
 /// One block of a page.
 ///
 /// Prose goes in as HTML from the shared markup, so what the app shows and what
@@ -540,6 +594,15 @@ fn BlockView(block: &'static content::Block) -> impl IntoView {
                     <p inner_html=markup::to_html(para)></p>
                 }).collect_view()}
             }).collect_view()}
+        }
+        .into_any(),
+        Block::Playground => view! { <Playground /> }.into_any(),
+        Block::PlainList(items) => view! {
+            <ul class="engines">
+                {items.iter().map(|item| view! {
+                    <li inner_html=markup::to_html(item)></li>
+                }).collect_view()}
+            </ul>
         }
         .into_any(),
         Block::MarksTable => view! {
@@ -692,6 +755,27 @@ fn App() -> impl IntoView {
                                 </svg>
                             </button>
                         }).collect_view()}
+
+                        // Not a question. It is somewhere to go and do
+                        // something, so it says so and does not wear a `?`.
+                        <button
+                            class="card does"
+                            on:click=move |_| {
+                                set_page.set(Page::Playground);
+                                write_address(
+                                    theme.get_untracked(), Page::Playground, None, true,
+                                );
+                                if let Some(win) = web_sys::window() {
+                                    win.scroll_to_with_x_and_y(0.0, 0.0);
+                                }
+                            }
+                        >
+                            <span class="card-icon" aria-hidden="true">">_"</span>
+                            <span class="card-label">"Test syntax without downloading."</span>
+                            <svg class="card-arrow" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 12h15M13 6l6 6-6 6" />
+                            </svg>
+                        </button>
                     </nav>
                 })}
             </div>

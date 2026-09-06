@@ -1210,3 +1210,68 @@ main h3 {
   margin: 2rem 0 0.75rem;
   scroll-margin-top: 2rem;
 }
+
+/* A block that goes and does something rather than asking. */
+.card.does .card-icon { color: var(--good); }
+.card.does .card-label { white-space: normal; line-height: 1.35; }
+
+/* ══════════════ the playground ══════════════ */
+
+.play { margin: 0 0 1.5rem; }
+
+.play-in {
+  display: block;
+  width: 100%;
+  min-height: 16rem;
+  background: var(--bg-soft);
+  color: var(--fg);
+  border: 1px solid var(--rule);
+  border-radius: 5px 5px 0 0;
+  padding: 1rem 1.1rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  tab-size: 4;
+  resize: vertical;
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+.play-in:focus { outline: 1px solid var(--green-line); outline-offset: -1px; }
+
+.play-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.6rem 1.1rem;
+  border-inline: 1px solid var(--rule);
+  background: var(--panel);
+}
+
+.play-run {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.4rem 1.2rem;
+  background: var(--name);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.play-run:hover { filter: brightness(1.08); }
+.play-run:focus-visible { outline: 2px solid var(--name); outline-offset: 2px; }
+
+.play-note { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+
+.play-out {
+  border-radius: 0 0 5px 5px;
+  background: var(--bg-soft);
+  white-space: pre-wrap;
+  min-height: 3rem;
+}
+
+.play-out.waiting code { color: var(--muted); }
+.play-out.stopped code { color: var(--cost); }

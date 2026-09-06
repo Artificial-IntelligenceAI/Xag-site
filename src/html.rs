@@ -67,6 +67,17 @@ fn block(b: &Block, out: &mut String) {
                 }
             }
         }
+        Block::PlainList(items) => {
+            out.push_str("<ul class=\"engines\">");
+            for item in items.iter() {
+                out.push_str(&format!("<li>{}</li>", to_html(item)));
+            }
+            out.push_str("</ul>");
+        }
+        Block::Playground => out.push_str(
+            "<p class=\"marks-note\">The editor is here once the page has loaded. \
+             It runs on a small interpreter in your browser, not on the compiler.</p>",
+        ),
         Block::MarksTable => {
             out.push_str("<table class=\"marks-table\"><tbody>");
             for (class, mark, meaning) in MARKS.iter() {
@@ -220,6 +231,7 @@ fn nav(here: &str, theme: Option<&str>) -> String {
         let label = match page.slug {
             "" => "Home",
             "questions" => "Questions",
+            "playground" => "Playground",
             "philosophy" => "Design Philosophy",
             "credits" => "Credits, License, Source",
             other => other,

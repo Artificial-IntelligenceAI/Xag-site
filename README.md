@@ -87,6 +87,27 @@ every page reconnecting forever to nothing. `trunk build --release` on its own
 does not include it; the check is that `dist/index.html` contains no
 `__TRUNK_ADDRESS__`.
 
+## Checking the playground against the compiler
+
+The playground on `/playground` runs Xag in the browser, on a small interpreter
+written for this site (`src/play.rs`). It is a second implementation of a
+language, which is a thing that drifts, and a page teaching a syntax the
+compiler does not accept is worse than no page.
+
+```sh
+XAGC=/path/to/xagc cargo run --features prerender --bin verify-play
+```
+
+That runs every program the playground ships, and a handful it should refuse,
+through both the interpreter and a real `xagc`, and exits non-zero if they
+disagree. It is not in CI, because CI has no compiler to hand; somebody has to
+run it after either side changes.
+
+A disagreement is not a bug to be patched into agreement. It means the
+playground is telling readers something untrue, and the fixes are to correct it
+or to stop claiming that much — `src/play.rs` carries a list of what it does not
+know, and that list is allowed to grow.
+
 `_redirects` makes every path serve `index.html`, without which the routing has
 nothing to read. `_headers` keeps the page itself uncached — every path is the
 same HTML, and a cached one strands a reader on an old build — while the hashed

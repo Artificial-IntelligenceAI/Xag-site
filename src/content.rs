@@ -41,6 +41,11 @@ pub enum Block {
     Bullets(&'static [(&'static str, &'static str)]),
     /// The questions, each landing on an id of its own.
     Questions,
+    /// The editor that runs a little Xag in the browser. There is nothing to
+    /// put in a document for it, so the built HTML says so instead.
+    Playground,
+    /// A list of plain statements.
+    PlainList(&'static [&'static str]),
     /// Somebody else's words.
     Quote {
         paragraphs: &'static [&'static str],
@@ -66,11 +71,12 @@ pub struct Page {
     pub sections: &'static [Section],
 }
 
-pub const PAGES: [Page; 4] = [HOME, QUESTIONS_PAGE, PHILOSOPHY, CREDITS];
+pub const PAGES: [Page; 5] = [HOME, QUESTIONS_PAGE, PLAYGROUND, PHILOSOPHY, CREDITS];
 
 pub fn page(slug: &str) -> &'static Page {
     match slug {
         "questions" => &QUESTIONS_PAGE,
+        "playground" => &PLAYGROUND,
         "philosophy" => &PHILOSOPHY,
         "credits" => &CREDITS,
         _ => &HOME,
@@ -182,6 +188,53 @@ pub const QUESTIONS_PAGE: Page = Page {
         heading: "Asked",
         blocks: &[Block::Questions],
     }],
+};
+
+// ─────────────────────────── Playground ────────────────────────────
+
+pub const PLAYGROUND: Page = Page {
+    slug: "playground",
+    title: "Playground — Xag",
+    summary: "A small interpreter in the browser for trying Xag's syntax. It is \
+              not the compiler and knows only a little of the language.",
+    lede: "Somewhere to find out how the syntax feels, without cloning anything \
+           or building LLVM.",
+    sections: &[
+        Section {
+            id: "try",
+            heading: "Try it",
+            blocks: &[Block::Playground],
+        },
+        Section {
+            id: "what-this-is",
+            heading: "What this is not",
+            blocks: &[
+                Block::Warning(
+                    "This is not the compiler. It is a few hundred lines written \
+                     for this website, and where it disagrees with `xagc`, it is \
+                     wrong and `xagc` is right.",
+                ),
+                Block::Para(
+                    "It exists because trying a syntax and trusting a language are \
+                     different questions, and the first should not cost a checkout \
+                     and a build of LLVM. It answers the first one only.",
+                ),
+                Block::Para("What it knows:"),
+                Block::PlainList(&crate::play::SUPPORTED),
+                Block::Para("What it does not:"),
+                Block::PlainList(&crate::play::UNSUPPORTED),
+                Block::Para(
+                    "Every program it ships with is run through both it and the \
+                     real compiler, and they agree — that check is \
+                     `src/verify_play.rs` and somebody has to run it. It is not \
+                     protection against the language moving underneath, which \
+                     Xag does, weekly. [Build the compiler]\
+                     (https://github.com/Artificial-IntelligenceAI/Xag-lang) for \
+                     the language itself.",
+                ),
+            ],
+        },
+    ],
 };
 
 // ──────────────────────────── Philosophy ────────────────────────────
