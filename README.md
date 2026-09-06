@@ -56,7 +56,9 @@ trunk build --release    # static files into dist/
 cargo test               # the tokeniser's tests
 ```
 
-Nothing is deployed yet, and no domain is pointed at it.
+`xag-lang.com` and `xag-lang.org` are both registered. The `.com` is canonical
+and is what `index.html` names; pointing the `.org` at it is a redirect for
+whatever ends up serving the site. Nothing is deployed yet.
 
 ## Licence
 
