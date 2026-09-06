@@ -47,6 +47,9 @@ const PINGS: [f32; 5] = [880.0, 1046.5, 1174.7, 1318.5, 1568.0];
 /// was got wrong once by a factor of thirty.
 pub const TARGET_DBFS: f32 = -23.0;
 
+/// Where the reader's answer is kept between visits.
+const REMEMBERED: &str = "xag.ambience";
+
 /// The same xorshift the sky is drawn with.
 pub struct Rng(pub u32);
 
@@ -352,6 +355,18 @@ mod live {
         );
     }
 
+    /// Whether there is a sound coming out, as opposed to a sound having been
+    /// asked for. A context the browser has not let start yet is silent, and a
+    /// button that called that state "on" would be telling the reader something
+    /// untrue.
+    pub fn is_audible() -> bool {
+        RUNNING.with(|r| {
+            r.borrow()
+                .as_ref()
+                .is_some_and(|v| v.ctx.state() == web_sys::AudioContextState::Running)
+        })
+    }
+
     /// A context made before the reader has touched the page is handed back
     /// suspended, and a suspended context is silence. This is what un-suspends
     /// it, and it does nothing at all once the ambience has been switched off.
@@ -370,6 +385,11 @@ mod live {
     /// the page, and that rule is not one to argue with — so the context is
     /// built up front and waits, silent, until the first click or key.
     pub fn arm() {
+        // What the reader settled on last time they were here.
+        if !super::preference() {
+            return;
+        }
+
         let _ = start();
 
         let Some(win) = web_sys::window() else { return };
@@ -430,6 +450,42 @@ pub fn arm() {
     live::arm();
 }
 
+/// Reports whether a sound is actually coming out, every so often, so the
+/// button can say what is true rather than what was asked for.
+#[cfg(target_arch = "wasm32")]
+pub fn watch_audible(report: impl Fn(bool) + 'static) {
+    use wasm_bindgen::closure::Closure;
+    use wasm_bindgen::JsCast;
+
+    let tick = Closure::wrap(Box::new(move || report(live::is_audible())) as Box<dyn FnMut()>);
+    if let Some(win) = web_sys::window() {
+        let _ = win.set_interval_with_callback_and_timeout_and_arguments_0(
+            tick.as_ref().unchecked_ref(),
+            400,
+        );
+    }
+    tick.forget();
+}
+
+/// What the reader chose last time. On unless they said otherwise — and unless
+/// the browser will not keep anything for us, in which case on is the default
+/// and there is nothing to remember it with.
+#[cfg(target_arch = "wasm32")]
+pub fn preference() -> bool {
+    web_sys::window()
+        .and_then(|w| w.local_storage().ok().flatten())
+        .and_then(|s| s.get_item(REMEMBERED).ok().flatten())
+        .map_or(true, |v| v != "off")
+}
+
+/// Kept, so that refreshing the page does not undo the reader's answer.
+#[cfg(target_arch = "wasm32")]
+pub fn remember(on: bool) {
+    if let Some(store) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) {
+        let _ = store.set_item(REMEMBERED, if on { "on" } else { "off" });
+    }
+}
+
 #[cfg(target_arch = "wasm32")]
 pub fn stop() {
     live::stop();
@@ -440,6 +496,17 @@ pub fn start() {}
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn arm() {}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn watch_audible(_report: impl Fn(bool) + 'static) {}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn preference() -> bool {
+    true
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn remember(_on: bool) {}
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn stop() {}

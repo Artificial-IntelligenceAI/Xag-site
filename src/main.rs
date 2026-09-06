@@ -114,23 +114,51 @@ fn Space() -> impl IntoView {
 /// past three seconds can be stopped, which is what this button is for.
 #[component]
 fn SoundToggle() -> impl IntoView {
-    let (playing, set_playing) = signal(true);
+    // What the reader asked for, which is not the same as what is happening.
+    let (wanted, set_wanted) = signal(ambience::preference());
+    // Whether a sound is actually coming out.
+    let (audible, set_audible) = signal(false);
+
+    // A browser decides for itself when a page may be heard, so the button asks
+    // rather than assumes. Saying "on" over silence is the one thing it must
+    // not do.
+    Effect::new(move |_| {
+        ambience::watch_audible(move |on| set_audible.set(on));
+    });
+
+    let label = move || match (wanted.get(), audible.get()) {
+        (false, _) => "ambience off",
+        (true, true) => "ambience on",
+        // Asked for, built, and waiting for the browser to allow it.
+        (true, false) => "ambience waiting",
+    };
 
     view! {
         <button
             class="sound"
-            class:on=move || playing.get()
-            aria-pressed=move || playing.get().to_string()
+            class:on=move || wanted.get() && audible.get()
+            class:waiting=move || wanted.get() && !audible.get()
+            aria-pressed=move || wanted.get().to_string()
+            title=move || if wanted.get() && !audible.get() {
+                "Your browser will let this through once you click or press a key"
+            } else {
+                "Ambience"
+            }
             on:click=move |_| {
-                let next = !playing.get();
-                set_playing.set(next);
-                // Made here, inside the click, because a browser will not let a
-                // page open an audio context any other way.
-                if next { ambience::start() } else { ambience::stop() }
+                let next = !wanted.get();
+                set_wanted.set(next);
+                // Kept, so a refresh does not undo the answer.
+                ambience::remember(next);
+                if next {
+                    ambience::start();
+                } else {
+                    ambience::stop();
+                    set_audible.set(false);
+                }
             }
         >
             <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
-            {move || if playing.get() { "ambience on" } else { "ambience off" }}
+            {label}
         </button>
     }
 }
