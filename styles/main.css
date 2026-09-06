@@ -39,7 +39,9 @@ html { -webkit-text-size-adjust: 100%; background: var(--bg); }
 
 body {
   margin: 0;
-  padding: 0 0 6rem;
+  /* The dock floats over the bottom of the window, so the page stops short of
+   * it rather than running underneath. */
+  padding: 0 0 9rem;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--sans);
@@ -83,12 +85,14 @@ body {
 }
 
 .tagline {
-  font-size: clamp(1.4rem, 3.1vw, 2.15rem);
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.15rem, 2.3vw, 1.7rem);
+  line-height: 1.3;
+  letter-spacing: -0.015em;
   font-weight: 400;
   margin: 0 0 1.75rem;
+  max-width: 20ch;
   color: var(--fg);
+  text-wrap: balance;
 }
 
 .hero .warning {
@@ -468,4 +472,31 @@ blockquote footer { font-family: var(--mono); font-size: 0.8rem; }
 @media (max-width: 44rem) {
   .marks-panes { grid-template-columns: 1fr; }
   .marks-input { min-height: 9rem; }
+}
+
+/* ══════════════ the dock ══════════════ */
+
+/* Empty on purpose. It is here to hold something later, and until then it
+ * holds nothing rather than holding placeholders. */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  z-index: 6;
+  height: 60px;
+  width: min(30rem, calc(100vw - 3rem));
+  border-radius: 18px;
+  border: 1px solid var(--green-line);
+  background: rgba(7, 18, 14, 0.72);
+  backdrop-filter: blur(16px) saturate(0.85);
+  -webkit-backdrop-filter: blur(16px) saturate(0.85);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(126, 245, 184, 0.07);
+  pointer-events: none;
+}
+
+@media (max-width: 30rem) {
+  .dock { bottom: 0.9rem; height: 54px; border-radius: 15px; }
 }

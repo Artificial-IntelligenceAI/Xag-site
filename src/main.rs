@@ -126,7 +126,9 @@ fn Hero() -> impl IntoView {
             <div class="hero-inner">
                 <div class="hero-words">
                     <h1>"Xag"</h1>
-                    <p class="tagline">"A size is always written."</p>
+                    <p class="tagline">
+                        "Dot-chained, Safe, Excellent runtime performance, Slow compilation time."
+                    </p>
                     <p class="warning">"Early work in progress — nothing here is stable yet."</p>
                     <a class="cta" href="#building">"Build from source"</a>
                 </div>
@@ -175,6 +177,9 @@ fn Marks() -> impl IntoView {
 fn App() -> impl IntoView {
     view! {
         <Hero />
+
+        // Nothing in it yet, and nothing pretending to be in it either.
+        <div class="dock" aria-hidden="true"></div>
 
         <p class="vertical-note">
             "Everything on this website is WASM via Rust where possible"
