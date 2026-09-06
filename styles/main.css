@@ -33,73 +33,6 @@
   --measure: 42rem;
 }
 
-/* ══════════════ where the display can actually show it ══════════════ */
-
-/* The palette above is sRGB, and stays that way for everything that renders it
- * as sRGB. This is not a brightening: it is the same two colours said in a
- * space that can hold more of them, so a green that sRGB has to clip arrives
- * whole.
- *
- * Both questions have to be asked. `color-gamut: p3` says the display can show
- * the colour; `dynamic-range: high` says it has the headroom to show it
- * brightly rather than tone-mapping it back down. A screen answering only the
- * first gets the sRGB palette, because a wide-gamut colour squeezed into an SDR
- * envelope comes out muddier than the sRGB one it replaced.
- *
- * `@supports` guards the lot: a browser that cannot parse `color(display-p3 …)`
- * must not be handed a rule that drops the declaration and leaves the token
- * unset. */
-@supports (color: color(display-p3 0 1 0)) {
-  @media (color-gamut: p3) and (dynamic-range: high) {
-    :root {
-      /* The two marks, past the edge of sRGB. */
-      --name: color(display-p3 0.196 0.925 0.545);
-      --value: color(display-p3 0.945 0.675 0.235);
-
-      --green-dim: color(display-p3 0.196 0.925 0.545 / 0.14);
-      --green-line: color(display-p3 0.196 0.925 0.545 / 0.24);
-
-      --fg: color(display-p3 0.898 0.937 0.914);
-    }
-
-    /* A rock is lit by a real light now rather than a printed one. */
-    .rock .body { stroke: color(display-p3 0.48 0.96 0.72 / 0.5); }
-    .rock .facet { fill: color(display-p3 0.66 1 0.84 / 0.24); }
-    .rock.middle { filter: drop-shadow(0 0 9px color(display-p3 0.24 0.88 0.54 / 0.24)); }
-    .rock.near { filter: drop-shadow(0 0 16px color(display-p3 0.24 0.88 0.54 / 0.3)); }
-
-    /* An impact is the one thing on the page that should be hard to look at. */
-    .shard polygon {
-      fill: color(display-p3 0.62 1 0.8);
-      stroke: color(display-p3 0.9 1 0.95 / 0.7);
-    }
-
-    .flash {
-      background: radial-gradient(
-        circle,
-        color(display-p3 0.84 1 0.91 / 0.95),
-        color(display-p3 0.24 0.88 0.54 / 0.45) 42%,
-        color(display-p3 0.24 0.88 0.54 / 0) 70%
-      );
-    }
-
-    .star { background: color(display-p3 0.87 0.97 0.92); }
-
-    .cta { box-shadow: 0 0 0 color(display-p3 0.24 0.88 0.54 / 0); }
-    .cta:hover { box-shadow: 0 6px 28px color(display-p3 0.24 0.88 0.54 / 0.36); }
-  }
-}
-
-/* Where a browser will hand back the headroom it is holding, take it. Nothing
- * above depends on this: it is ignored wherever it is not understood, and the
- * page is already correct without it. */
-@supports (dynamic-range-limit: no-limit) {
-  @media (dynamic-range: high) {
-    .flash,
-    .shard polygon { dynamic-range-limit: no-limit; }
-  }
-}
-
 * { box-sizing: border-box; }
 
 html {
@@ -689,5 +622,91 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
     -webkit-mask-image: linear-gradient(
       90deg, transparent 0, #000 14px, #000 calc(100% - 20px), transparent 100%
     );
+  }
+}
+
+/* ══════════════ where the display can actually show it ══════════════ */
+
+/* The palette above is sRGB and every colour is declared there first. This says
+ * the same colours again in Display P3, on displays that can hold them.
+ *
+ * The greens go most of the way to the P3 primary rather than a shade past
+ * sRGB. A green a few percent outside the smaller gamut is a green nobody can
+ * see the point of, and the whole gain of P3 over sRGB is in exactly this
+ * corner — saturated greens are where the two gamuts differ most.
+ *
+ * It is put on the rocks, the button and the impact, which are the only large
+ * areas of colour on the page. On thin text and one-pixel borders a gamut
+ * difference is real and invisible.
+ *
+ * Both questions have to be asked. `color-gamut: p3` says the display can show
+ * the colour; `dynamic-range: high` says it has the headroom to show it
+ * brightly rather than tone-mapping it back down. A screen answering only the
+ * first keeps the sRGB palette, because a wide-gamut colour squeezed into an
+ * SDR envelope comes out muddier than the sRGB one it replaced.
+ *
+ * `@supports` guards the lot: a browser that cannot parse `color(display-p3 …)`
+ * must not be handed a rule that drops the declaration and leaves a token
+ * holding nothing. */
+@supports (color: color(display-p3 0 1 0)) {
+  @media (color-gamut: p3) and (dynamic-range: high) {
+    :root {
+      /* The two marks, taken most of the way out. */
+      --name: color(display-p3 0.12 1 0.46);
+      --value: color(display-p3 1 0.66 0.13);
+
+      --green-dim: color(display-p3 0.12 1 0.46 / 0.16);
+      --green-line: color(display-p3 0.12 1 0.46 / 0.3);
+    }
+
+    /* The rocks are the largest colour on the page, so this is where a wider
+     * gamut is actually seen rather than merely used. */
+    .rock .body { stroke: color(display-p3 0.45 1 0.7 / 0.6); }
+    .rock .facet { fill: color(display-p3 0.7 1 0.86 / 0.3); }
+    /* The stops live in the shared defs, which is a sibling of the rocks
+     * rather than inside one — so they are reached from there. */
+    .space-defs .lit { stop-color: color(display-p3 0.2 1 0.55); }
+    .space-defs .dark { stop-color: color(display-p3 0.02 0.16 0.11); }
+
+    .rock.middle { filter: drop-shadow(0 0 11px color(display-p3 0.1 1 0.45 / 0.32)); }
+    .rock.near { filter: drop-shadow(0 0 20px color(display-p3 0.1 1 0.45 / 0.4)); }
+
+    /* An impact is the one thing here that should be hard to look at. */
+    .shard polygon {
+      fill: color(display-p3 0.55 1 0.75);
+      stroke: color(display-p3 0.92 1 0.96 / 0.8);
+    }
+
+    .flash {
+      background: radial-gradient(
+        circle,
+        color(display-p3 0.88 1 0.94 / 0.98),
+        color(display-p3 0.15 1 0.5 / 0.55) 42%,
+        color(display-p3 0.15 1 0.5 / 0) 70%
+      );
+    }
+
+    .star { background: color(display-p3 0.9 1 0.95); }
+
+    /* A solid block of it, which is the easiest place of all to see. */
+    .cta { background: color(display-p3 0.12 1 0.46); color: color(display-p3 0.01 0.09 0.04); }
+    .cta:hover { box-shadow: 0 6px 32px color(display-p3 0.1 1 0.45 / 0.45); }
+
+    .scrim {
+      background:
+        linear-gradient(90deg, var(--bg) 2%, rgba(4, 7, 10, 0.82) 20%,
+          rgba(4, 7, 10, 0.34) 38%, rgba(4, 7, 10, 0) 56%),
+        radial-gradient(110% 80% at 74% 44%, color(display-p3 0.1 1 0.45 / 0.13), transparent 64%),
+        linear-gradient(to bottom, transparent 78%, var(--bg) 100%);
+    }
+  }
+}
+
+/* Where a browser will hand back the headroom it is holding, take it. Nothing
+ * above depends on this: it is ignored wherever it is not understood, and the
+ * page is already correct without it. */
+@supports (dynamic-range-limit: no-limit) {
+  @media (dynamic-range: high) {
+    :root { dynamic-range-limit: no-limit; }
   }
 }

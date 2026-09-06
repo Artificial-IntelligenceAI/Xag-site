@@ -105,16 +105,16 @@ fn Space() -> impl IntoView {
             <svg class="space-defs" width="0" height="0">
                 <defs>
                     <linearGradient id="rock-a" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#3f9e6c" />
-                        <stop offset="100%" stop-color="#08211a" />
+                        <stop offset="0%" stop-color="#3f9e6c" class="lit" />
+                        <stop offset="100%" stop-color="#08211a" class="dark" />
                     </linearGradient>
                     <linearGradient id="rock-b" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#54c98c" />
-                        <stop offset="100%" stop-color="#0b2b21" />
+                        <stop offset="0%" stop-color="#54c98c" class="lit" />
+                        <stop offset="100%" stop-color="#0b2b21" class="dark" />
                     </linearGradient>
                     <linearGradient id="rock-c" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#2f8f63" />
-                        <stop offset="100%" stop-color="#071c16" />
+                        <stop offset="0%" stop-color="#2f8f63" class="lit" />
+                        <stop offset="100%" stop-color="#071c16" class="dark" />
                     </linearGradient>
                 </defs>
             </svg>
