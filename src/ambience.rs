@@ -12,12 +12,25 @@
 //! It is off until it is asked for. A page that makes noise at someone who did
 //! not ask is a page they close.
 
-/// A drone, held low. A fifth and an octave over the root, which is the
-//  interval that beats slowly rather than arguing.
-const DRONE: [f32; 3] = [55.0, 82.41, 110.0];
+/// The drone, and how loud each part of it is: a root, a fifth and an octave,
+/// which is the spacing that beats slowly rather than arguing.
+///
+/// The root is 110 and not 55. A laptop speaker reproduces almost nothing below
+/// about 180Hz, so a drone written an octave down is a drone most people cannot
+/// hear at all — the first version of this put nearly all its energy under
+/// 80Hz and was silent on anything without a woofer. The 55 is kept underneath
+/// at a low level for the machines that can render it, where it adds weight
+/// rather than pitch.
+const DRONE: [(f32, f32); 4] = [
+    (55.0, 0.18),
+    (110.0, 0.26),
+    (164.81, 0.22),
+    (220.0, 0.14),
+];
 
-/// Partials that fade in and out over the drone, well above it.
-const PARTIALS: [f32; 4] = [220.0, 329.63, 440.0, 659.26];
+/// Partials that fade in and out over the drone, in the range a small speaker
+/// is actually good at.
+const PARTIALS: [f32; 4] = [329.63, 440.0, 659.26, 880.0];
 
 /// Rates for the slow movement, in hertz. They are deliberately awkward
 /// against each other: 0.013 and 0.017 and 0.023 and 0.031 are all primes over
@@ -28,6 +41,11 @@ const LFO_RATES: [f32; 4] = [0.013, 0.017, 0.023, 0.031];
 /// without ever implying the next one, which is what keeps it from becoming a
 /// melody.
 const PINGS: [f32; 5] = [880.0, 1046.5, 1174.7, 1318.5, 1568.0];
+
+/// Where the mix is meant to land, measured at the destination: about -23dBFS
+/// RMS, which is present without being an event. It is written down because it
+/// was got wrong once by a factor of thirty.
+pub const TARGET_DBFS: f32 = -23.0;
 
 /// The same xorshift the sky is drawn with.
 pub struct Rng(pub u32);
@@ -114,8 +132,8 @@ mod live {
 
     /// How loud it gets once it has faded all the way in. Ambience is meant to
     /// be noticed on leaving rather than on arriving.
-    const LEVEL: f32 = 0.11;
-    const FADE: f64 = 4.0;
+    const LEVEL: f32 = 0.34;
+    const FADE: f64 = 3.0;
 
     thread_local! {
         static RUNNING: RefCell<Option<Voice>> = const { RefCell::new(None) };
@@ -189,7 +207,7 @@ mod live {
 
         // A little of everything stays dry, or it turns to soup.
         let dry = ctx.create_gain().ok()?;
-        dry.gain().set_value(0.5);
+        dry.gain().set_value(0.55);
         dry.connect_with_audio_node(&master).ok()?;
 
         let bus = ctx.create_gain().ok()?;
@@ -199,9 +217,11 @@ mod live {
         let mut rng = Rng(0xA5A5_1234);
 
         // ── the drone ──
-        for (i, hz) in DRONE.iter().enumerate() {
+        for (i, (hz, gain)) in DRONE.iter().enumerate() {
             let osc = ctx.create_oscillator().ok()?;
-            osc.set_type(if i == 2 {
+            // The top of the drone is a triangle, whose harmonics land at 660
+            // and 1100 where a small speaker can carry them.
+            osc.set_type(if i == 3 {
                 OscillatorType::Triangle
             } else {
                 OscillatorType::Sine
@@ -215,7 +235,7 @@ mod live {
             }
 
             let level = ctx.create_gain().ok()?;
-            level.gain().set_value(if i == 2 { 0.16 } else { 0.3 });
+            level.gain().set_value(*gain);
             osc.connect_with_audio_node(&level).ok()?;
             level.connect_with_audio_node(&bus).ok()?;
             osc.start().ok()?;
@@ -230,8 +250,8 @@ mod live {
             let level = ctx.create_gain().ok()?;
             // Sitting just above silence, so the mover below takes it under
             // and brings it back rather than pumping it.
-            level.gain().set_value(0.022);
-            if let Some(mover) = slow_mover(&ctx, LFO_RATES[i], 0.021) {
+            level.gain().set_value(0.085);
+            if let Some(mover) = slow_mover(&ctx, LFO_RATES[i], 0.08) {
                 mover.connect_with_audio_param(&level.gain()).ok()?;
             }
             osc.connect_with_audio_node(&level).ok()?;
@@ -247,14 +267,14 @@ mod live {
 
         let hull = ctx.create_biquad_filter().ok()?;
         hull.set_type(BiquadFilterType::Lowpass);
-        hull.frequency().set_value(420.0);
+        hull.frequency().set_value(900.0);
         hull.q().set_value(0.6);
-        if let Some(mover) = slow_mover(&ctx, 0.019, 160.0) {
+        if let Some(mover) = slow_mover(&ctx, 0.019, 350.0) {
             mover.connect_with_audio_param(&hull.frequency()).ok()?;
         }
 
         let bed = ctx.create_gain().ok()?;
-        bed.gain().set_value(0.5);
+        bed.gain().set_value(0.34);
         source.connect_with_audio_node(&hull).ok()?;
         hull.connect_with_audio_node(&bed).ok()?;
         bed.connect_with_audio_node(&bus).ok()?;
@@ -296,7 +316,7 @@ mod live {
                 level.gain().set_value_at_time(0.0001, now).ok()?;
                 level
                     .gain()
-                    .exponential_ramp_to_value_at_time(rng.range(0.05, 0.11), now + 0.4)
+                    .exponential_ramp_to_value_at_time(rng.range(0.09, 0.18), now + 0.4)
                     .ok()?;
                 level
                     .gain()
