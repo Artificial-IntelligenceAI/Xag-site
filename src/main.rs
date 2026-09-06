@@ -7,6 +7,7 @@
 
 mod space;
 mod syntax;
+mod warp;
 
 use leptos::prelude::*;
 use syntax::tokenize;
@@ -228,6 +229,28 @@ fn scroll_to(anchor: &str) -> bool {
     true
 }
 
+/// The warp, and what the name turns out to stand for.
+///
+/// It is always in the document, hidden, rather than being put there when it is
+/// wanted: Leptos does not add a view in the same breath as the signal that
+/// asks for it, and `warp::open` has to find its elements straight away.
+#[component]
+fn WarpOverlay() -> impl IntoView {
+    let streaks = (0..warp::STREAKS)
+        .map(|_| view! { <i class="streak"></i> })
+        .collect_view();
+
+    view! {
+        <div class="warp" on:click=move |_| warp::close()>
+            <div class="warp-field" aria-hidden="true">{streaks}</div>
+            <p class="warp-reveal">
+                "e"<u>"X"</u>"cellent "<u>"A"</u>"lien lan"<u>"G"</u>"uage"
+            </p>
+            <span class="warp-dismiss">"click anywhere, or press escape"</span>
+        </div>
+    }
+}
+
 /// Where the reader's choice of theme is kept between visits.
 const THEME_KEY: &str = "xag.theme";
 
@@ -268,13 +291,7 @@ fn apply_theme(solarized: bool) {
 }
 
 #[component]
-fn ThemeToggle() -> impl IntoView {
-    let (solarized, set_solarized) = signal(stored_solarized());
-
-    // Runs on mount as well as on every change, so a reader who chose this
-    // last time arrives in it rather than watching it swap over.
-    Effect::new(move |_| apply_theme(solarized.get()));
-
+fn ThemeToggle(solarized: ReadSignal<bool>, set_solarized: WriteSignal<bool>) -> impl IntoView {
     view! {
         <button
             class="theme"
@@ -643,12 +660,40 @@ fn App() -> impl IntoView {
     let (page, set_page) = signal(Page::Home);
     let at_home = move || page.get() == Page::Home;
 
+    let (solarized, set_solarized) = signal(stored_solarized());
+
+    // Runs on mount as well as on every change, so a reader who chose Solarized
+    // last time arrives in it rather than watching it swap over. Closing the
+    // warp is part of it: the name does not stand for anything in a palette
+    // somebody else designed.
+    Effect::new(move |_| {
+        let on = solarized.get();
+        apply_theme(on);
+        if on {
+            warp::close();
+        }
+    });
+
     view! {
         <header class="hero" class:compact=move || !at_home()>
             <Space />
             <div class="hero-inner">
                 <div class="hero-words">
-                    <h1>"Xag"</h1>
+                    <h1>
+                        {move || if solarized.get() {
+                            view! { <span class="wordmark">"Xag"</span> }.into_any()
+                        } else {
+                            view! {
+                                <button
+                                    class="wordmark"
+                                    title="What it stands for"
+                                    on:click=move |_| warp::open()
+                                >
+                                    "Xag"
+                                </button>
+                            }.into_any()
+                        }}
+                    </h1>
                     <p class="tagline">
                         <span>"Dot-chained"</span>
                         <span>"Safe"</span>
@@ -676,7 +721,8 @@ fn App() -> impl IntoView {
             </div>
         </header>
 
-        <ThemeToggle />
+        <ThemeToggle solarized=solarized set_solarized=set_solarized />
+        <WarpOverlay />
 
         <p class="vertical-note">
             "Everything on this website is WASM via Rust where possible"
@@ -708,4 +754,7 @@ fn main() {
 
     // The rocks are drawn by the markup above and moved by this.
     space::animate();
+
+    // Escape closes the warp, wherever the reader is.
+    warp::install();
 }

@@ -711,6 +711,110 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
   }
 }
 
+/* ══════════════ the warp ══════════════ */
+
+/* The name is a button, and has to give none of that away until it is
+ * hovered. */
+.wordmark {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+button.wordmark:hover {
+  color: var(--name);
+  text-shadow: 0 0 46px var(--green-dim);
+}
+
+button.wordmark:focus-visible {
+  outline: 2px solid var(--name);
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+
+.warp {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  background: #000;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.28s ease;
+}
+
+/* Put on a line after the display, so the fade is a transition and not a
+ * jump. */
+.warp.running { opacity: 1; }
+
+.warp-field { position: absolute; inset: 0; }
+
+/* Each one is a bar lying along its own bearing: the origin is its inner end,
+ * so a rotation aims it outwards and the translation carries it along itself.
+ * Width is how long it is, which Rust writes as it speeds up. */
+.streak {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: 2px;
+  width: 2px;
+  transform-origin: 0 50%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(214, 255, 233, 0), var(--name));
+  will-change: transform, width, opacity;
+}
+
+.warp-reveal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: 0;
+  width: min(90vw, 44rem);
+  transform: translate(-50%, -50%) scale(0.86);
+  text-align: center;
+  font-size: clamp(1.5rem, 5.2vw, 3.4rem);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: #fff;
+  opacity: 0;
+  text-shadow: 0 0 60px var(--green-dim);
+}
+
+/* The three that make the name. */
+.warp-reveal u {
+  color: var(--name);
+  text-decoration: none;
+  border-bottom: 3px solid var(--name);
+  padding-bottom: 0.04em;
+}
+
+.warp-dismiss {
+  position: absolute;
+  left: 50%;
+  bottom: 2.5rem;
+  transform: translateX(-50%);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  opacity: 0;
+  animation: dismiss-in 0.6s ease 2s forwards;
+}
+
+@keyframes dismiss-in { to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .warp { transition: none; }
+  .warp-dismiss { animation: none; opacity: 1; }
+}
+
 /* ══════════════ Solarized Dark ══════════════ */
 
 /* Ethan Schoonover's palette, and nothing else. The point of asking for
@@ -741,6 +845,11 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
 /* No sky. `space::pause` stops the frame loop as well; this is only so that
  * nothing is left on screen in the frame before it notices. */
 [data-theme="solarized"] .space { display: none; }
+
+/* And no warp. The name is rendered as plain text rather than a button in this
+ * theme, so there is nothing to click; this is the belt to that pair of
+ * braces. */
+[data-theme="solarized"] .warp { display: none !important; }
 
 /* Emphasised text is base1, which is as bright as this palette goes. */
 [data-theme="solarized"] .hero h1 { color: #93a1a1; }
