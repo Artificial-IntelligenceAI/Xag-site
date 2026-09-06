@@ -116,8 +116,8 @@ body {
 }
 
 .tagline {
-  font-size: clamp(1.15rem, 2.3vw, 1.7rem);
-  line-height: 1.75;
+  font-size: clamp(1.05rem, 2.1vw, 1.55rem);
+  line-height: 1.4;
   letter-spacing: -0.015em;
   font-weight: 400;
   margin: 0 0 1.75rem;
@@ -132,6 +132,10 @@ body {
  * in its own green and its own red. */
 .tagline .good { color: var(--good); }
 .tagline .cost { color: var(--cost); }
+
+/* A cost belongs to the claim above it, so it sits close under it and the gap
+ * goes between the pairs instead. */
+.tagline .cost + .good { margin-top: 0.7em; }
 
 .hero .warning {
   display: block;

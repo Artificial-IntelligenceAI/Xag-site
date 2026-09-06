@@ -361,14 +361,17 @@ pub const CREDITS: Page = Page {
     ],
 };
 
-/// What the language is like, and whether each of them is a thing to want.
+/// What the language is like, in pairs: what it gives, and what that costs.
 ///
-/// The last one is not a boast and is not written as one. A language that says
-/// where it is expensive is easier to believe about everything else, which is
-/// the whole reason it is on the front page rather than left out.
-pub const TAGLINE: [(&str, bool); 4] = [
+/// Each of them is true of the other. Nothing is inferred *because* the chain
+/// is explicit; it rejects programs *because* it is safe without a collector;
+/// it builds slowly *because* of what it does to run quickly. A page that
+/// listed only the first of each pair would be describing a different language.
+pub const TAGLINE: [(&str, bool); 6] = [
     ("Dot-Chained Syntax", true),
+    ("Nothing Is Inferred", false),
     ("Safe", true),
+    ("Rejects Programs That Would Run", false),
     ("Excellent Runtime Performance", true),
     ("Slow Compilation Time", false),
 ];
@@ -390,10 +393,16 @@ mod tests {
     /// it is — a line that is neither is a line nobody knows how to read.
     #[test]
     fn the_tagline_says_which_of_its_claims_are_good() {
-        assert_eq!(TAGLINE.len(), 4);
-        assert!(TAGLINE.iter().any(|(_, good)| *good), "none of it is good");
-        assert!(TAGLINE.iter().any(|(_, good)| !*good), "none of it is a cost");
         assert!(TAGLINE.iter().all(|(text, _)| !text.is_empty()));
+
+        // Every claim is paired with what it costs: they alternate, and there
+        // are as many costs as there are claims. A green with no red under it
+        // would be the one line on the page that only sells.
+        assert_eq!(TAGLINE.len() % 2, 0, "something is unpaired");
+        for pair in TAGLINE.chunks(2) {
+            assert!(pair[0].1, "{} is not a claim", pair[0].0);
+            assert!(!pair[1].1, "{} is not a cost", pair[1].0);
+        }
     }
 
     #[test]
