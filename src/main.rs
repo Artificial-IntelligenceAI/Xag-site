@@ -127,7 +127,10 @@ fn Hero() -> impl IntoView {
                 <div class="hero-words">
                     <h1>"Xag"</h1>
                     <p class="tagline">
-                        "Dot-chained, Safe, Excellent runtime performance, Slow compilation time."
+                        <span>"Dot-chained,"</span>
+                        <span>"Safe,"</span>
+                        <span>"Excellent runtime performance,"</span>
+                        <span>"Slow compilation time."</span>
                     </p>
                     <p class="warning">"Early work in progress — nothing here is stable yet."</p>
                     <a class="cta" href="#building">"Build from source"</a>
