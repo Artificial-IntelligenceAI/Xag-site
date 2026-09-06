@@ -84,7 +84,7 @@ body {
   font-family: var(--sans);
   font-size: clamp(4.5rem, 13vw, 9rem);
   line-height: 0.92;
-  letter-spacing: -0.045em;
+  letter-spacing: 0.03em;
   font-weight: 500;
   margin: 0 0 1.25rem;
   color: #fff;
@@ -92,7 +92,7 @@ body {
 
 .tagline {
   font-size: clamp(1.15rem, 2.3vw, 1.7rem);
-  line-height: 1.28;
+  line-height: 1.75;
   letter-spacing: -0.015em;
   font-weight: 400;
   margin: 0 0 1.75rem;
