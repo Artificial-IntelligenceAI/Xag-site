@@ -62,10 +62,11 @@ fn Space() -> impl IntoView {
     let rocks = space::rocks()
         .into_iter()
         .map(|r| {
+            // Where it starts. Everything after this frame is written by
+            // `space::animate`.
             let style = format!(
-                "left:{:.2}%;top:{:.2}%;width:{:.0}px;height:{:.0}px;\
-                 --secs:{:.1}s;--delay:{:.1}s;--dx:{:.1}px;--dy:{:.1}px;--spin:{:.1}deg",
-                r.left, r.top, r.size, r.size, r.secs, r.delay, r.dx, r.dy, r.spin
+                "left:{:.2}%;top:{:.2}%;width:{:.0}px;height:{:.0}px",
+                r.left, r.top, r.size, r.size
             );
             view! {
                 <div class=r.depth.class() style=style>
@@ -393,4 +394,7 @@ fn main() {
     }
 
     leptos::mount::mount_to_body(App);
+
+    // The rocks are drawn by the markup above and moved by this.
+    space::animate();
 }

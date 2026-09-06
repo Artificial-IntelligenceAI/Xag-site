@@ -192,9 +192,9 @@ body {
   to   { opacity: 0.95; }
 }
 
+/* The transform is written every frame from Rust; nothing here animates it. */
 .rock {
   position: absolute;
-  animation: drift var(--secs) ease-in-out var(--delay) infinite alternate;
   will-change: transform;
 }
 
@@ -209,11 +209,6 @@ body {
 .rock.middle { opacity: 0.8;  filter: drop-shadow(0 0 9px rgba(62, 224, 138, 0.2)); }
 .rock.near   { opacity: 0.95; filter: drop-shadow(0 0 16px rgba(62, 224, 138, 0.26)); }
 
-@keyframes drift {
-  from { transform: translate3d(0, 0, 0) rotate(0deg); }
-  to   { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--spin)); }
-}
-
 /* The words sit on the left and want the dark; the bottom hands over to the
  * page. */
 .scrim {
@@ -226,8 +221,9 @@ body {
     linear-gradient(to bottom, transparent 78%, var(--bg) 100%);
 }
 
+/* The rocks stop being moved in `space::animate`, which checks this too. */
 @media (prefers-reduced-motion: reduce) {
-  .rock, .twinkles { animation: none; }
+  .twinkles { animation: none; }
 }
 
 /* ══════════════ the page ══════════════ */
