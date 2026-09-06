@@ -5,7 +5,6 @@
 //! message is the one `xagc check` actually printed. Nothing on this page
 //! describes a language feature that was not exercised first.
 
-mod ambience;
 mod space;
 mod syntax;
 
@@ -105,64 +104,6 @@ fn Space() -> impl IntoView {
     }
 }
 
-/// Turns the ambience on and off.
-///
-/// It starts on. Nothing may play at a reader who has not touched the page —
-/// no browser would allow it and it would be rude if they did — so the sound
-/// is built and waiting from the first frame, and the first click or key
-/// anywhere on the page lets it through. WCAG 1.4.2 asks that anything running
-/// past three seconds can be stopped, which is what this button is for.
-#[component]
-fn SoundToggle() -> impl IntoView {
-    // What the reader asked for, which is not the same as what is happening.
-    let (wanted, set_wanted) = signal(ambience::preference());
-    // Whether a sound is actually coming out.
-    let (audible, set_audible) = signal(false);
-
-    // A browser decides for itself when a page may be heard, so the button asks
-    // rather than assumes. Saying "on" over silence is the one thing it must
-    // not do.
-    Effect::new(move |_| {
-        ambience::watch_audible(move |on| set_audible.set(on));
-    });
-
-    let label = move || match (wanted.get(), audible.get()) {
-        (false, _) => "ambience off",
-        (true, true) => "ambience on",
-        // Asked for, built, and waiting for the browser to allow it.
-        (true, false) => "ambience waiting",
-    };
-
-    view! {
-        <button
-            class="sound"
-            class:on=move || wanted.get() && audible.get()
-            class:waiting=move || wanted.get() && !audible.get()
-            aria-pressed=move || wanted.get().to_string()
-            title=move || if wanted.get() && !audible.get() {
-                "Your browser will let this through once you click or press a key"
-            } else {
-                "Ambience"
-            }
-            on:click=move |_| {
-                let next = !wanted.get();
-                set_wanted.set(next);
-                // Kept, so a refresh does not undo the answer.
-                ambience::remember(next);
-                if next {
-                    ambience::start();
-                } else {
-                    ambience::stop();
-                    set_audible.set(false);
-                }
-            }
-        >
-            <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i></span>
-            {label}
-        </button>
-    }
-}
-
 /// One of the cards down the right of the hero.
 #[component]
 fn Card(href: &'static str, label: &'static str, icon: &'static str) -> impl IntoView {
@@ -234,8 +175,6 @@ fn Marks() -> impl IntoView {
 fn App() -> impl IntoView {
     view! {
         <Hero />
-
-        <SoundToggle />
 
         <p class="vertical-note">
             "Everything on this website is WASM via Rust where possible"
@@ -458,7 +397,4 @@ fn main() {
 
     // The rocks are drawn by the markup above and moved by this.
     space::animate();
-
-    // Built now, heard as soon as the reader touches anything.
-    ambience::arm();
 }
