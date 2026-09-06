@@ -650,7 +650,7 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
  * holding nothing. */
 @supports (color: color(display-p3 0 1 0)) {
   @media (color-gamut: p3) and (dynamic-range: high) {
-    :root {
+    :root:not([data-theme="solarized"]) {
       /* The two marks, taken most of the way out. */
       --name: color(display-p3 0.12 1 0.46);
       --value: color(display-p3 1 0.66 0.13);
@@ -661,23 +661,23 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
 
     /* The rocks are the largest colour on the page, so this is where a wider
      * gamut is actually seen rather than merely used. */
-    .rock .body { stroke: color(display-p3 0.45 1 0.7 / 0.6); }
-    .rock .facet { fill: color(display-p3 0.7 1 0.86 / 0.3); }
+    :root:not([data-theme="solarized"]) .rock .body { stroke: color(display-p3 0.45 1 0.7 / 0.6); }
+    :root:not([data-theme="solarized"]) .rock .facet { fill: color(display-p3 0.7 1 0.86 / 0.3); }
     /* The stops live in the shared defs, which is a sibling of the rocks
      * rather than inside one — so they are reached from there. */
-    .space-defs .lit { stop-color: color(display-p3 0.2 1 0.55); }
-    .space-defs .dark { stop-color: color(display-p3 0.02 0.16 0.11); }
+    :root:not([data-theme="solarized"]) .space-defs .lit { stop-color: color(display-p3 0.2 1 0.55); }
+    :root:not([data-theme="solarized"]) .space-defs .dark { stop-color: color(display-p3 0.02 0.16 0.11); }
 
-    .rock.middle { filter: drop-shadow(0 0 11px color(display-p3 0.1 1 0.45 / 0.32)); }
-    .rock.near { filter: drop-shadow(0 0 20px color(display-p3 0.1 1 0.45 / 0.4)); }
+    :root:not([data-theme="solarized"]) .rock.middle { filter: drop-shadow(0 0 11px color(display-p3 0.1 1 0.45 / 0.32)); }
+    :root:not([data-theme="solarized"]) .rock.near { filter: drop-shadow(0 0 20px color(display-p3 0.1 1 0.45 / 0.4)); }
 
     /* An impact is the one thing here that should be hard to look at. */
-    .shard polygon {
+    :root:not([data-theme="solarized"]) .shard polygon {
       fill: color(display-p3 0.55 1 0.75);
       stroke: color(display-p3 0.92 1 0.96 / 0.8);
     }
 
-    .flash {
+    :root:not([data-theme="solarized"]) .flash {
       background: radial-gradient(
         circle,
         color(display-p3 0.88 1 0.94 / 0.98),
@@ -686,13 +686,13 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
       );
     }
 
-    .star { background: color(display-p3 0.9 1 0.95); }
+    :root:not([data-theme="solarized"]) .star { background: color(display-p3 0.9 1 0.95); }
 
     /* A solid block of it, which is the easiest place of all to see. */
-    .cta { background: color(display-p3 0.12 1 0.46); color: color(display-p3 0.01 0.09 0.04); }
-    .cta:hover { box-shadow: 0 6px 32px color(display-p3 0.1 1 0.45 / 0.45); }
+    :root:not([data-theme="solarized"]) .cta { background: color(display-p3 0.12 1 0.46); color: color(display-p3 0.01 0.09 0.04); }
+    :root:not([data-theme="solarized"]) .cta:hover { box-shadow: 0 6px 32px color(display-p3 0.1 1 0.45 / 0.45); }
 
-    .scrim {
+    :root:not([data-theme="solarized"]) .scrim {
       background:
         linear-gradient(90deg, var(--bg) 2%, rgba(4, 7, 10, 0.82) 20%,
           rgba(4, 7, 10, 0.34) 38%, rgba(4, 7, 10, 0) 56%),
@@ -707,6 +707,116 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
  * page is already correct without it. */
 @supports (dynamic-range-limit: no-limit) {
   @media (dynamic-range: high) {
-    :root { dynamic-range-limit: no-limit; }
+    :root:not([data-theme="solarized"]) { dynamic-range-limit: no-limit; }
   }
+}
+
+/* ══════════════ Solarized Dark ══════════════ */
+
+/* Ethan Schoonover's palette, and nothing else. The point of asking for
+ * Solarized is to get Solarized rather than to get this site wearing it, so
+ * everything the site does on its own account stops: the sky, the glow, the
+ * glass, and the wider gamut, which is switched off at each of its own rules
+ * rather than here.
+ *
+ *   base03 #002b36   base02 #073642   base01 #586e75   base00 #657b83
+ *   base0  #839496   base1  #93a1a1   yellow #b58900   cyan   #2aa198
+ */
+:root[data-theme="solarized"] {
+  --bg: #002b36;
+  --bg-soft: #073642;
+  --panel: #073642;
+  --fg: #839496;
+  --muted: #586e75;
+  --rule: rgba(88, 110, 117, 0.36);
+
+  /* Still two marks, still only two. */
+  --name: #2aa198;
+  --value: #b58900;
+
+  --green-dim: rgba(42, 161, 152, 0.12);
+  --green-line: rgba(88, 110, 117, 0.36);
+}
+
+/* No sky. `space::pause` stops the frame loop as well; this is only so that
+ * nothing is left on screen in the frame before it notices. */
+[data-theme="solarized"] .space { display: none; }
+
+/* Emphasised text is base1, which is as bright as this palette goes. */
+[data-theme="solarized"] .hero h1 { color: #93a1a1; }
+[data-theme="solarized"] strong,
+[data-theme="solarized"] .marks-table strong { color: #93a1a1; }
+
+/* Flat. No blur behind anything, no light coming off anything. */
+[data-theme="solarized"] .card,
+[data-theme="solarized"] .dock,
+[data-theme="solarized"] .theme {
+  background: #073642;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+[data-theme="solarized"] .card:hover {
+  background: rgba(88, 110, 117, 0.2);
+  border-color: rgba(88, 110, 117, 0.6);
+  transform: none;
+}
+
+[data-theme="solarized"] .card:hover .card-arrow { transform: none; }
+
+[data-theme="solarized"] .cta {
+  background: #2aa198;
+  color: #002b36;
+  box-shadow: none;
+}
+
+[data-theme="solarized"] .cta:hover { box-shadow: none; transform: none; }
+
+[data-theme="solarized"] .dock-item.here {
+  background: rgba(42, 161, 152, 0.16);
+  color: #2aa198;
+}
+
+[data-theme="solarized"] button.dock-item:hover {
+  background: rgba(88, 110, 117, 0.2);
+  color: #93a1a1;
+}
+
+[data-theme="solarized"] .dock-item.waiting {
+  color: rgba(88, 110, 117, 0.55);
+  text-decoration-color: rgba(88, 110, 117, 0.4);
+}
+
+/* ══════════════ the theme switch ══════════════ */
+
+.theme {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 7;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: rgba(7, 18, 14, 0.78);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.theme:hover { color: var(--fg); border-color: var(--green-line); }
+.theme.on { color: var(--name); border-color: var(--name); }
+
+.theme:focus-visible {
+  outline: 2px solid var(--name);
+  outline-offset: 2px;
+}
+
+@media (max-width: 40rem) {
+  .theme { top: 0.75rem; right: 0.75rem; font-size: 0.65rem; padding: 0.4rem 0.7rem; }
 }

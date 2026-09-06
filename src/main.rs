@@ -228,6 +228,66 @@ fn scroll_to(anchor: &str) -> bool {
     true
 }
 
+/// Where the reader's choice of theme is kept between visits.
+const THEME_KEY: &str = "xag.theme";
+
+fn stored_solarized() -> bool {
+    web_sys::window()
+        .and_then(|w| w.local_storage().ok().flatten())
+        .and_then(|store| store.get_item(THEME_KEY).ok().flatten())
+        .is_some_and(|v| v == "solarized")
+}
+
+/// Puts the theme on the document, remembers it, and starts or stops the sky.
+///
+/// Solarized Dark is a palette somebody else settled, and the point of asking
+/// for it is to get it rather than to get this site wearing it. So the sky
+/// stops, the wider gamut is switched off in the stylesheet, and what is left
+/// is sixteen colours on a flat ground.
+fn apply_theme(solarized: bool) {
+    if let Some(root) = web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|d| d.document_element())
+    {
+        if solarized {
+            let _ = root.set_attribute("data-theme", "solarized");
+        } else {
+            let _ = root.remove_attribute("data-theme");
+        }
+    }
+
+    if let Some(store) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) {
+        let _ = store.set_item(THEME_KEY, if solarized { "solarized" } else { "xag" });
+    }
+
+    if solarized {
+        space::pause();
+    } else {
+        space::resume();
+    }
+}
+
+#[component]
+fn ThemeToggle() -> impl IntoView {
+    let (solarized, set_solarized) = signal(stored_solarized());
+
+    // Runs on mount as well as on every change, so a reader who chose this
+    // last time arrives in it rather than watching it swap over.
+    Effect::new(move |_| apply_theme(solarized.get()));
+
+    view! {
+        <button
+            class="theme"
+            class:on=move || solarized.get()
+            aria-pressed=move || solarized.get().to_string()
+            title="Solarized Dark: no sky, no wide gamut, sixteen colours"
+            on:click=move |_| set_solarized.update(|v| *v = !*v)
+        >
+            "Solarized Dark"
+        </button>
+    }
+}
+
 /// The parts of the site, in the order they sit in the dock.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Page {
@@ -615,6 +675,8 @@ fn App() -> impl IntoView {
                 })}
             </div>
         </header>
+
+        <ThemeToggle />
 
         <p class="vertical-note">
             "Everything on this website is WASM via Rust where possible"

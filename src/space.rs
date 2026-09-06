@@ -696,6 +696,38 @@ pub fn shard_shapes() -> Vec<String> {
     (0..SHARD_POOL).map(|_| outline(&mut rng, 26.0, 48.0)).collect()
 }
 
+#[cfg(target_arch = "wasm32")]
+thread_local! {
+    /// Kept between stops, so the sky is where it was rather than where it
+    /// started when it comes back.
+    static SKY: std::cell::RefCell<Option<Sky>> = const { std::cell::RefCell::new(None) };
+    /// Whether a frame loop is already going. Two of them would step the same
+    /// sky twice a frame and everything would move at double speed.
+    static LOOPING: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    /// Set by the theme. The running loop notices, puts everything away, and
+    /// stops asking for frames.
+    static PAUSED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Stops the sky. The loop ends rather than idling: nothing is stepped, and no
+/// further frames are asked for.
+#[cfg(target_arch = "wasm32")]
+pub fn pause() {
+    PAUSED.with(|p| p.set(true));
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn resume() {
+    PAUSED.with(|p| p.set(false));
+    animate();
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn pause() {}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn resume() {}
+
 /// Moves the sky, one frame at a time. Everything it decides is `Sky`'s; this
 /// only reads the clock, reads the size of the window, and writes styles.
 #[cfg(target_arch = "wasm32")]
@@ -705,6 +737,11 @@ pub fn animate() {
     use wasm_bindgen::closure::Closure;
     use wasm_bindgen::JsCast;
     use web_sys::HtmlElement;
+
+    // Already going, or asked to stop. Either way there is nothing to start.
+    if LOOPING.with(|l| l.get()) || PAUSED.with(|p| p.get()) {
+        return;
+    }
 
     let Some(win) = web_sys::window() else { return };
 
@@ -728,18 +765,30 @@ pub fn animate() {
             .collect()
     }
 
-    let sky = Sky::new();
-    let Some(rock_els) = collect(&doc, ".rock", sky.drifts.len()) else { return };
+    let rocks_wanted = SKY.with(|s| {
+        let mut s = s.borrow_mut();
+        s.get_or_insert_with(Sky::new).drifts.len()
+    });
+    let Some(rock_els) = collect(&doc, ".rock", rocks_wanted) else { return };
     let Some(shard_els) = collect(&doc, ".shard", SHARD_POOL) else { return };
     let Some(flash_els) = collect(&doc, ".flash", FLASH_POOL) else { return };
 
-    let sky = Rc::new(RefCell::new(sky));
+    LOOPING.with(|l| l.set(true));
     let frame: Rc<RefCell<Option<Closure<dyn FnMut(f64)>>>> = Rc::new(RefCell::new(None));
     let next = frame.clone();
     let last = Rc::new(RefCell::new(f64::NAN));
 
     *next.borrow_mut() = Some(Closure::wrap(Box::new(move |now: f64| {
         let Some(win) = web_sys::window() else { return };
+
+        // Asked to stop: put everything away and do not ask for another frame.
+        if PAUSED.with(|p| p.get()) {
+            for el in rock_els.iter().chain(shard_els.iter()).chain(flash_els.iter()) {
+                let _ = el.style().set_property("display", "none");
+            }
+            LOOPING.with(|l| l.set(false));
+            return;
+        }
 
         let secs = {
             let mut last = last.borrow_mut();
@@ -761,7 +810,9 @@ pub fn animate() {
         let showing = win.scroll_y().unwrap_or(0.0) <= height;
 
         if width > 0.0 && showing {
-            let mut sky = sky.borrow_mut();
+            SKY.with(|cell| {
+            let mut sky = cell.borrow_mut();
+            let Some(sky) = sky.as_mut() else { return };
             sky.step(secs, width, height);
 
             for (el, drift) in rock_els.iter().zip(sky.drifts.iter()) {
@@ -815,6 +866,7 @@ pub fn animate() {
                     let _ = style.set_property("display", "none");
                 }
             }
+            });
         }
 
         if let Some(cb) = frame.borrow().as_ref() {
