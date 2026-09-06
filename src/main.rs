@@ -12,6 +12,7 @@ use leptos::prelude::*;
 use syntax::tokenize;
 
 const REPO: &str = "https://github.com/Artificial-IntelligenceAI/Xag-lang";
+const SITE_REPO: &str = "https://github.com/Artificial-IntelligenceAI/Xag-site";
 
 /// Colours a piece of Xag. One span per token, in the order they were read.
 fn highlight(src: &str) -> impl IntoView {
@@ -126,49 +127,6 @@ fn Space() -> impl IntoView {
     }
 }
 
-/// One of the cards down the right of the hero.
-#[component]
-fn Card(href: &'static str, label: &'static str, icon: &'static str) -> impl IntoView {
-    view! {
-        <a class="card" href=href>
-            <span class="card-icon" aria-hidden="true">{icon}</span>
-            <span class="card-label">{label}</span>
-            <svg class="card-arrow" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 12h15M13 6l6 6-6 6" />
-            </svg>
-        </a>
-    }
-}
-
-#[component]
-fn Hero() -> impl IntoView {
-    view! {
-        <header class="hero">
-            <Space />
-            <div class="hero-inner">
-                <div class="hero-words">
-                    <h1>"Xag"</h1>
-                    <p class="tagline">
-                        <span>"Dot-chained"</span>
-                        <span>"Safe"</span>
-                        <span>"Excellent runtime performance"</span>
-                        <span>"Slow compilation time"</span>
-                    </p>
-                    <p class="warning">"Early work in progress — nothing here is stable yet."</p>
-                    <a class="cta" href="#building">"Build from source"</a>
-                </div>
-                <nav class="cards" aria-label="Sections">
-                    <Card href="#marks" label="Two marks" icon="'*" />
-                    <Card href="#ownership" label="Ownership" icon="→" />
-                    <Card href="#errors" label="Error messages" icon="^^" />
-                    <Card href="#engines" label="Three engines" icon="≡" />
-                    <Card href="#building" label="Build from source" icon=">_" />
-                </nav>
-            </div>
-        </header>
-    }
-}
-
 /// Type in it and the colours follow. It colours; it does not run.
 #[component]
 fn Marks() -> impl IntoView {
@@ -198,220 +156,393 @@ fn Marks() -> impl IntoView {
     }
 }
 
+/// The parts of the site, in the order they sit in the dock.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Page {
+    Home,
+    Download,
+    Docs,
+    Philosophy,
+    Credits,
+}
+
+const PAGES: [Page; 5] = [
+    Page::Home,
+    Page::Download,
+    Page::Docs,
+    Page::Philosophy,
+    Page::Credits,
+];
+
+impl Page {
+    fn label(self) -> &'static str {
+        match self {
+            Page::Home => "Home",
+            Page::Download => "Download",
+            Page::Docs => "Docs",
+            Page::Philosophy => "Design Philosophy",
+            Page::Credits => "Credits, License, Source",
+        }
+    }
+
+    /// Two of these lead nowhere yet, and say so rather than opening on an
+    /// apology. There is nothing to download — Xag cannot be installed, only
+    /// built — and the documentation is the compiler's README for now.
+    fn works(self) -> bool {
+        !matches!(self, Page::Download | Page::Docs)
+    }
+
+    fn why_not(self) -> &'static str {
+        match self {
+            Page::Download => "Nothing to download yet — Xag is built from source, not installed",
+            Page::Docs => "Not written yet",
+            _ => "",
+        }
+    }
+}
+
+#[component]
+fn Dock(page: ReadSignal<Page>, set_page: WriteSignal<Page>) -> impl IntoView {
+    let items = PAGES
+        .iter()
+        .map(|&p| {
+            if p.works() {
+                view! {
+                    <button
+                        class="dock-item"
+                        class:here=move || page.get() == p
+                        aria-current=move || if page.get() == p { "page" } else { "false" }
+                        on:click=move |_| {
+                            set_page.set(p);
+                            // A new page starts at its top, not wherever the
+                            // last one had been scrolled to.
+                            if let Some(win) = web_sys::window() {
+                                win.scroll_to_with_x_and_y(0.0, 0.0);
+                            }
+                        }
+                    >
+                        {p.label()}
+                    </button>
+                }
+                .into_any()
+            } else {
+                view! {
+                    <span class="dock-item waiting" aria-disabled="true" title=p.why_not()>
+                        {p.label()}
+                    </span>
+                }
+                .into_any()
+            }
+        })
+        .collect_view();
+
+    view! { <nav class="dock" aria-label="Sections">{items}</nav> }
+}
+
+#[component]
+fn Home() -> impl IntoView {
+    view! {
+        <p class="lede">
+            "A programming language built around high performance, helpful error
+             messages, and Rust-style memory management. There is no "
+            <code>"int"</code>" on its own, because there is no size to assume.
+             Programs are compiled ahead of time, either to native code or to a form
+             run by an AOT interpreter."
+        </p>
+
+        <section id="reading">
+            <h2>"Reading a program"</h2>
+            <p>
+                "Items sit next to each other and are used in order. Nothing is
+                 concatenated into a third thing, so there is no "<code>"+"</code>
+                " for text."
+            </p>
+            <Sample
+                file="counting.xag"
+                src=include_str!("../samples/counting.xag")
+                output="sum to 10 = 55"
+            />
+        </section>
+
+        <section id="ownership">
+            <h2>"What a name owns, and what it lends"</h2>
+            <p>
+                "Ownership is Rust's, checked when the program is compiled, with no
+                 garbage collector under it. A transfer is spelled at the call site,
+                 so a reader never has to work out from a function's signature that a
+                 value has left."
+            </p>
+            <Sample
+                file="borrowing.xag"
+                src=include_str!("../samples/borrowing.xag")
+                output="size: 5\nafter: hello!\nlonger: hello!\nkept: spare"
+            />
+        </section>
+
+        <section id="errors">
+            <h2>"When it has something to say"</h2>
+            <p>
+                "Take the program above, hand a value over for good, and then ask for
+                 it again. This is what comes back — not a paraphrase of it:"
+            </p>
+            <pre class="diagnostic"><code>{include_str!("../samples/moved.output.txt")}</code></pre>
+            <p>
+                "A diagnostic that points at the wrong thing, or names a rule the
+                 program did not break, is a bug of the same kind as miscompiling —
+                 the compiler is telling the reader something untrue either way."
+            </p>
+        </section>
+
+        <section id="building">
+            <h2>"Building it"</h2>
+            <p>
+                "The compiler is written in C++20 against LLVM's native C++ API. It
+                 needs LLVM 23 or newer, CMake and Ninja."
+            </p>
+            <pre class="shell"><code>{
+"git clone https://github.com/Artificial-IntelligenceAI/Xag-lang.git\n\
+cd Xag-lang\n\
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release\n\
+ninja -C build\n\
+./build/xagc run examples/counting.xag"
+            }</code></pre>
+            <p>
+                <code>"xagc run"</code>" runs a program on the test interpreter, "
+                <code>"xagc fast"</code>" on the fast one, and "<code>"xagc build"</code>
+                " compiles it ahead of time and writes an executable beside it. "
+                <code>"xagc check"</code>" checks a program without running it."
+            </p>
+            <p class="warning">
+                "There is no install yet. Building from source is the way to run it."
+            </p>
+        </section>
+    }
+}
+
+#[component]
+fn Philosophy() -> impl IntoView {
+    view! {
+        <p class="lede">
+            "What is unusual about Xag is not what it can do. It is what it refuses
+             to decide on your behalf."
+        </p>
+
+        <section id="marks">
+            <h2>"Two marks, and only two"</h2>
+            <table class="marks-table">
+                <tbody>
+                    <tr>
+                        <td><code class="tk-name">"'…'"</code></td>
+                        <td>"a "<strong>"name"</strong></td>
+                    </tr>
+                    <tr>
+                        <td><code class="tk-value">"*…*"</code></td>
+                        <td>"a "<strong>"written value"</strong></td>
+                    </tr>
+                    <tr>
+                        <td><code class="tk-word">"word"</code></td>
+                        <td>"a function, a type, or a segment of a chain"</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>
+                "A quoted thing is a name wherever you meet it. It never has to be
+                 re-read as a value because of where it happens to sit — position is
+                 never consulted."
+            </p>
+            <p>
+                "There is no third mark for text versus number, because the type
+                 already answers that: "<code class="tk-value">"*1000*"</code>" is a
+                 number under "<code>"int64"</code>" and four characters under "
+                <code>"str"</code>"."
+            </p>
+            <p class="claim">"There are only two marks and there will only ever be two."</p>
+            <Marks />
+        </section>
+
+        <section id="chains">
+            <h2>"Declarations are chains"</h2>
+            <p>
+                "What is unusual about a name lives in the chain that declares it.
+                 Every segment but the type has a default, and the default is always
+                 the least powerful thing — so a word appears only where there was a
+                 choice."
+            </p>
+            <Code src="var.mut.many.int64 'xs'".to_string() />
+            <p>
+                "That one changes, holds several, and holds 64-bit whole numbers.
+                 Drop "<code>"mut"</code>" and it does not change. Drop "
+                <code>"many"</code>" and it holds one."
+            </p>
+        </section>
+
+        <section id="engines">
+            <h2>"Three engines and an oracle"</h2>
+            <p>"There are three ways to run an Xag program, and they are kept apart on purpose."</p>
+            <ul class="engines">
+                <li>
+                    <strong>"A test interpreter"</strong>
+                    " — built to be obviously correct rather than fast. It walks the IR
+                     as written and does nothing clever anywhere. It is the one to
+                     believe when the engines disagree."
+                </li>
+                <li>
+                    <strong>"A fast interpreter"</strong>
+                    " — it turns the graph into flat code once and then runs it without
+                     looking anything up again. It shares nothing with the test
+                     interpreter but the runtime, on purpose: two engines that borrow
+                     from each other agree about what they borrowed, and a vote between
+                     them proves nothing."
+                </li>
+                <li>
+                    <strong>"A native backend"</strong>
+                    " — compiled ahead of time through LLVM."
+                </li>
+            </ul>
+            <p class="claim">
+                "Two engines can say that something is wrong; three can say which."
+            </p>
+            <p>
+                "A program generator writes random Xag programs, asks every engine what
+                 they say, and when they differ reports which one is out of step with
+                 the other two."
+            </p>
+            <p>
+                "Decimal gets a check the oracle cannot give it. Three engines calling
+                 one runtime agree about everything inside that runtime, so a mistake
+                 in the arithmetic itself is one all three would make together. So the
+                 decimal results are checked against Python's "<code>"decimal"</code>
+                 " — libmpdec, written by someone else from the same IBM specification,
+                 and derived from nothing here. Four hundred thousand cases agree
+                 exactly, apart from raising to a power, which the specification itself
+                 allows to be out by one in the last place."
+            </p>
+            <p>
+                "They are also asked of a real decimal floating-point unit. No machine
+                 here has one, so the test cross-compiles a program with no operating
+                 system under it, hands it to QEMU where a kernel would go, and reads
+                 the answers back over the console. Twenty thousand sums, differences,
+                 products and quotients agree exactly, cohorts included."
+            </p>
+        </section>
+    }
+}
+
+#[component]
+fn Credits() -> impl IntoView {
+    view! {
+        <section id="honest">
+            <h2>"Why would anyone ever use Xag?"</h2>
+            <blockquote>
+                <p>"Honestly, I don't know. 😂"</p>
+                <p>
+                    "The code written is mostly or 100% AI-made. Why? Because, I'm more
+                     of a designer, not a C++ stroke-inducing syntax reader 🤣.
+                     No offense."
+                </p>
+                <footer>"— the README"</footer>
+            </blockquote>
+        </section>
+
+        <section id="source">
+            <h2>"Source"</h2>
+            <p>
+                "The compiler, the runtime, the three engines and the oracle: "
+                <a href=REPO>{REPO}</a>
+            </p>
+            <p>
+                "Wrong diagnostics, confusing ones, and anything Xag accepts that it
+                 should not are worth reporting: "
+                <a href=format!("{REPO}/issues")>{format!("{REPO}/issues")}</a>
+            </p>
+            <p>
+                "This site is a Rust program compiled to WebAssembly. Its source is "
+                <a href=SITE_REPO>{SITE_REPO}</a>
+            </p>
+        </section>
+
+        <section id="license">
+            <h2>"License"</h2>
+            <p>"Copyright 2026 Tankun Sriket"</p>
+            <p>"Licensed under either of"</p>
+            <ul class="engines">
+                <li>
+                    "Apache License, Version 2.0 — "
+                    <a href="https://www.apache.org/licenses/LICENSE-2.0">
+                        "apache.org/licenses/LICENSE-2.0"
+                    </a>
+                </li>
+                <li>
+                    "MIT license — "
+                    <a href="https://opensource.org/licenses/MIT">
+                        "opensource.org/licenses/MIT"
+                    </a>
+                </li>
+            </ul>
+            <p>"at your option."</p>
+            <p>
+                "Unless you explicitly state otherwise, any contribution intentionally
+                 submitted for inclusion in this project by you, as defined in the
+                 Apache-2.0 license, shall be dual licensed as above, without any
+                 additional terms or conditions."
+            </p>
+        </section>
+
+        <section id="credits">
+            <h2>"Credits"</h2>
+            <p>
+                "Xag is designed by Tankun Sriket. The compiler is written against
+                 LLVM, and its grapheme handling is built from the Unicode Character
+                 Database, version 17.0.0."
+            </p>
+            <p>
+                "The decimal arithmetic is checked against Python's "
+                <code>"decimal"</code>" — libmpdec, by Stefan Krah — and against IBM's
+                 decimal floating-point unit under QEMU. Neither is derived from
+                 anything here, which is what makes them worth asking."
+            </p>
+        </section>
+    }
+}
+
 #[component]
 fn App() -> impl IntoView {
-    view! {
-        <Hero />
+    let (page, set_page) = signal(Page::Home);
+    let at_home = move || page.get() == Page::Home;
 
-        // Nothing in it yet, and nothing pretending to be in it either.
-        <div class="dock" aria-hidden="true"></div>
+    view! {
+        <header class="hero" class:compact=move || !at_home()>
+            <Space />
+            <div class="hero-inner">
+                <div class="hero-words">
+                    <h1>"Xag"</h1>
+                    <p class="tagline">
+                        <span>"Dot-chained"</span>
+                        <span>"Safe"</span>
+                        <span>"Excellent runtime performance"</span>
+                        <span>"Slow compilation time"</span>
+                    </p>
+                    <p class="warning">"Early work in progress — nothing here is stable yet."</p>
+                    <a class="cta" href="#building">"Build from source"</a>
+                </div>
+            </div>
+        </header>
 
         <p class="vertical-note">
             "Everything on this website is WASM via Rust where possible"
         </p>
 
         <main>
-            <p class="lede">
-                "A programming language built around high performance, helpful error
-                 messages, and Rust-style memory management. There is no "
-                <code>"int"</code>" on its own, because there is no size to assume.
-                 Programs are compiled ahead of time, either to native code or to a form
-                 run by an AOT interpreter."
-            </p>
-
-            <section id="marks">
-                <h2>"Two marks, and only two"</h2>
-                <table class="marks-table">
-                    <tbody>
-                        <tr>
-                            <td><code class="tk-name">"'…'"</code></td>
-                            <td>"a "<strong>"name"</strong></td>
-                        </tr>
-                        <tr>
-                            <td><code class="tk-value">"*…*"</code></td>
-                            <td>"a "<strong>"written value"</strong></td>
-                        </tr>
-                        <tr>
-                            <td><code class="tk-word">"word"</code></td>
-                            <td>"a function, a type, or a segment of a chain"</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p>
-                    "A quoted thing is a name wherever you meet it. It never has to be
-                     re-read as a value because of where it happens to sit — position is
-                     never consulted."
-                </p>
-                <p>
-                    "There is no third mark for text versus number, because the type
-                     already answers that: "<code class="tk-value">"*1000*"</code>" is a
-                     number under "<code>"int64"</code>" and four characters under "
-                    <code>"str"</code>"."
-                </p>
-                <p class="claim">"There are only two marks and there will only ever be two."</p>
-                <Marks />
-            </section>
-
-            <section id="chains">
-                <h2>"Declarations are chains"</h2>
-                <p>
-                    "What is unusual about a name lives in the chain that declares it.
-                     Every segment but the type has a default, and the default is always
-                     the least powerful thing — so a word appears only where there was a
-                     choice."
-                </p>
-                <Code src="var.mut.many.int64 'xs'".to_string() />
-                <p>
-                    "That one changes, holds several, and holds 64-bit whole numbers.
-                     Drop "<code>"mut"</code>" and it does not change. Drop "
-                    <code>"many"</code>" and it holds one."
-                </p>
-            </section>
-
-            <section id="reading">
-                <h2>"Reading a program"</h2>
-                <p>
-                    "Items sit next to each other and are used in order. Nothing is
-                     concatenated into a third thing, so there is no "<code>"+"</code>
-                    " for text."
-                </p>
-                <Sample
-                    file="counting.xag"
-                    src=include_str!("../samples/counting.xag")
-                    output="sum to 10 = 55"
-                />
-            </section>
-
-            <section id="ownership">
-                <h2>"What a name owns, and what it lends"</h2>
-                <p>
-                    "Ownership is Rust's, checked when the program is compiled, with no
-                     garbage collector under it. A transfer is spelled at the call site,
-                     so a reader never has to work out from a function's signature that a
-                     value has left."
-                </p>
-                <Sample
-                    file="borrowing.xag"
-                    src=include_str!("../samples/borrowing.xag")
-                    output="size: 5\nafter: hello!\nlonger: hello!\nkept: spare"
-                />
-            </section>
-
-            <section id="errors">
-                <h2>"When it has something to say"</h2>
-                <p>
-                    "Take the program above, hand a value over for good, and then ask for
-                     it again. This is what comes back — not a paraphrase of it:"
-                </p>
-                <pre class="diagnostic"><code>{include_str!("../samples/moved.output.txt")}</code></pre>
-                <p>
-                    "A diagnostic that points at the wrong thing, or names a rule the
-                     program did not break, is a bug of the same kind as miscompiling —
-                     the compiler is telling the reader something untrue either way."
-                </p>
-            </section>
-
-            <section id="engines">
-                <h2>"Three engines and an oracle"</h2>
-                <p>"There are three ways to run an Xag program, and they are kept apart on purpose."</p>
-                <ul class="engines">
-                    <li>
-                        <strong>"A test interpreter"</strong>
-                        " — built to be obviously correct rather than fast. It walks the IR
-                         as written and does nothing clever anywhere. It is the one to
-                         believe when the engines disagree."
-                    </li>
-                    <li>
-                        <strong>"A fast interpreter"</strong>
-                        " — it turns the graph into flat code once and then runs it without
-                         looking anything up again. It shares nothing with the test
-                         interpreter but the runtime, on purpose: two engines that borrow
-                         from each other agree about what they borrowed, and a vote between
-                         them proves nothing."
-                    </li>
-                    <li>
-                        <strong>"A native backend"</strong>
-                        " — compiled ahead of time through LLVM."
-                    </li>
-                </ul>
-                <p class="claim">
-                    "Two engines can say that something is wrong; three can say which."
-                </p>
-                <p>
-                    "A program generator writes random Xag programs, asks every engine what
-                     they say, and when they differ reports which one is out of step with
-                     the other two."
-                </p>
-                <p>
-                    "Decimal gets a check the oracle cannot give it. Three engines calling
-                     one runtime agree about everything inside that runtime, so a mistake
-                     in the arithmetic itself is one all three would make together. So the
-                     decimal results are checked against Python's "<code>"decimal"</code>
-                     " — libmpdec, written by someone else from the same IBM specification,
-                     and derived from nothing here. Four hundred thousand cases agree
-                     exactly, apart from raising to a power, which the specification itself
-                     allows to be out by one in the last place."
-                </p>
-                <p>
-                    "They are also asked of a real decimal floating-point unit. No machine
-                     here has one, so the test cross-compiles a program with no operating
-                     system under it, hands it to QEMU where a kernel would go, and reads
-                     the answers back over the console. Twenty thousand sums, differences,
-                     products and quotients agree exactly, cohorts included."
-                </p>
-            </section>
-
-            <section id="building">
-                <h2>"Building it"</h2>
-                <p>
-                    "The compiler is written in C++20 against LLVM's native C++ API. It
-                     needs LLVM 23 or newer, CMake and Ninja."
-                </p>
-                <pre class="shell"><code>{
-"git clone https://github.com/Artificial-IntelligenceAI/Xag-lang.git\n\
-cd Xag-lang\n\
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release\n\
-ninja -C build\n\
-./build/xagc run examples/counting.xag"
-                }</code></pre>
-                <p>
-                    <code>"xagc run"</code>" runs a program on the test interpreter, "
-                    <code>"xagc fast"</code>" on the fast one, and "<code>"xagc build"</code>
-                    " compiles it ahead of time and writes an executable beside it. "
-                    <code>"xagc check"</code>" checks a program without running it."
-                </p>
-                <p class="warning">
-                    "There is no install yet. Building from source is the way to run it."
-                </p>
-            </section>
-
-            <section id="honest">
-                <h2>"Why would anyone ever use Xag?"</h2>
-                <blockquote>
-                    <p>"Honestly, I don't know. 😂"</p>
-                    <p>
-                        "The code written is mostly or 100% AI-made. Why? Because, I'm more
-                         of a designer, not a C++ stroke-inducing syntax reader 🤣.
-                         No offense."
-                    </p>
-                    <footer>"— the README"</footer>
-                </blockquote>
-                <p>
-                    "Wrong diagnostics, confusing ones, and anything Xag accepts that it
-                     should not are worth reporting: "
-                    <a href=format!("{REPO}/issues")>{format!("{REPO}/issues")}</a>
-                </p>
-            </section>
+            {move || match page.get() {
+                Page::Philosophy => view! { <Philosophy /> }.into_any(),
+                Page::Credits => view! { <Credits /> }.into_any(),
+                // Download and Docs cannot be reached: the dock will not take a
+                // click on either of them.
+                _ => view! { <Home /> }.into_any(),
+            }}
         </main>
 
-        <footer class="site-footer">
-            <p>
-                <a href=REPO>"The compiler on GitHub"</a>
-                <span class="sep">" · "</span>
-                "Dual licensed Apache-2.0 and MIT"
-            </p>
-            <p class="fine">"Copyright 2026 Tankun Sriket"</p>
-        </footer>
+        <Dock page=page set_page=set_page />
     }
 }
 
