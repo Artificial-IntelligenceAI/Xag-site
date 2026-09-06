@@ -244,7 +244,9 @@ fn WarpOverlay() -> impl IntoView {
         <div class="warp" on:click=move |_| warp::close()>
             <div class="warp-field" aria-hidden="true">{streaks}</div>
             <p class="warp-reveal">
-                "e"<u>"X"</u>"cellent "<u>"A"</u>"lien lan"<u>"G"</u>"uage"
+                <span class="phrase">
+                    "e"<b>"X"</b>"cellent "<b>"A"</b>"lien lan"<b>"G"</b>"uage"
+                </span>
             </p>
             <span class="warp-dismiss">"click anywhere, or press escape"</span>
         </div>

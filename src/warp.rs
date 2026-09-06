@@ -13,11 +13,20 @@ use std::f64::consts::TAU;
 /// Enough to fill the view without asking much of anything.
 pub const STREAKS: usize = 150;
 
-/// When the words begin to arrive, in seconds.
-const REVEAL_AT: f64 = 0.85;
+/// How long it spends going, in seconds. It is still speeding up at the end of
+/// this.
+const TRAVEL: f64 = 1.45;
+
+/// How long it takes to come to rest afterwards.
+const STOPPING: f64 = 0.75;
+
+/// The words wait for the journey to be over. Arriving while the stars are
+/// still going past reads as a caption; arriving once everything has stopped
+/// reads as somewhere you have got to.
+const REVEAL_AT: f64 = TRAVEL + STOPPING;
 
 /// How long they take to arrive.
-const REVEAL_OVER: f64 = 0.9;
+const REVEAL_OVER: f64 = 0.65;
 
 /// The same xorshift as everywhere else here.
 struct Rng(u32);
@@ -87,15 +96,35 @@ impl Warp {
         *self = Warp::new();
     }
 
-    /// How fast everything is going by now. It keeps building: the whole
-    /// feeling of the thing is that it has not finished accelerating.
+    /// How fast everything is going by now: building the whole way out, then
+    /// falling to nothing. Cubed rather than straight, so it sheds most of the
+    /// speed early and settles rather than slamming.
     pub fn boost(&self) -> f64 {
-        1.0 + self.elapsed * self.elapsed * 2.6
+        let peak = 1.0 + TRAVEL * TRAVEL * 3.2;
+        if self.elapsed <= TRAVEL {
+            1.0 + self.elapsed * self.elapsed * 3.2
+        } else if self.elapsed < REVEAL_AT {
+            let through = ((self.elapsed - TRAVEL) / STOPPING).clamp(0.0, 1.0);
+            peak * (1.0 - through).powi(3)
+        } else {
+            0.0
+        }
     }
 
-    /// Nothing, then the words.
+    /// Whether the journey is over.
+    pub fn stopped(&self) -> bool {
+        self.elapsed >= REVEAL_AT
+    }
+
+    /// Nothing, then the words — and not before everything has stopped.
     pub fn reveal(&self) -> f64 {
         ((self.elapsed - REVEAL_AT) / REVEAL_OVER).clamp(0.0, 1.0)
+    }
+
+    /// The stars stay, dimmed, once they are still. You have arrived
+    /// somewhere rather than had the lights turned off.
+    pub fn field(&self) -> f64 {
+        1.0 - self.reveal() * 0.55
     }
 
     pub fn step(&mut self, secs: f64, width: f64, height: f64) {
@@ -271,9 +300,10 @@ mod live {
                         ),
                     );
                     let _ = el.style().set_property("width", &format!("{:.1}px", streak.len));
-                    let _ = el
-                        .style()
-                        .set_property("opacity", &format!("{:.3}", streak.bright));
+                    let _ = el.style().set_property(
+                        "opacity",
+                        &format!("{:.3}", streak.bright * warp.field()),
+                    );
                 }
 
                 if let Some(reveal) = reveal.as_ref() {
@@ -335,6 +365,15 @@ mod tests {
     const W: f64 = 1440.0;
     const H: f64 = 900.0;
 
+    fn run_for(warp: &mut Warp, secs: f64) {
+        let step: f64 = 0.01;
+        let mut left = secs;
+        while left > 0.0 {
+            warp.step(step.min(left), W, H);
+            left -= step;
+        }
+    }
+
     #[test]
     fn everything_leaves_the_middle() {
         let mut warp = Warp::new();
@@ -345,16 +384,34 @@ mod tests {
         }
     }
 
-    /// It has to keep building. A warp at a steady speed is a screensaver.
+    /// Out, and then to a halt. Both halves matter: it has to still be
+    /// building when it starts to slow, and it has to actually stop.
     #[test]
-    fn it_does_not_stop_accelerating() {
+    fn it_speeds_up_and_then_comes_to_rest() {
         let mut warp = Warp::new();
         let mut seen = warp.boost();
-        for _ in 0..40 {
-            warp.step(0.05, W, H);
+        while warp.elapsed < TRAVEL - 0.02 {
+            warp.step(0.01, W, H);
             let now = warp.boost();
-            assert!(now > seen, "it stopped speeding up");
+            assert!(now > seen, "it stopped speeding up while still travelling");
             seen = now;
+        }
+
+        let peak = warp.boost();
+        run_for(&mut warp, STOPPING + 0.05);
+        assert!(warp.boost() < peak * 0.02, "it never slowed down");
+        assert_eq!(warp.boost(), 0.0, "it never actually stopped");
+        assert!(warp.stopped());
+    }
+
+    #[test]
+    fn nothing_moves_once_it_has_stopped() {
+        let mut warp = Warp::new();
+        run_for(&mut warp, REVEAL_AT + 0.1);
+        let still: Vec<f64> = warp.streaks.iter().map(|s| s.dist).collect();
+        run_for(&mut warp, 1.0);
+        for (s, was) in warp.streaks.iter().zip(still) {
+            assert_eq!(s.dist, was, "something is still drifting after the stop");
         }
     }
 
@@ -364,11 +421,20 @@ mod tests {
         let mut warp = Warp::new();
         warp.step(0.05, W, H);
         let early: f64 = warp.streaks.iter().map(|s| s.len).sum();
-        for _ in 0..30 {
-            warp.step(0.05, W, H);
-        }
+        run_for(&mut warp, TRAVEL - 0.1);
         let later: f64 = warp.streaks.iter().map(|s| s.len).sum();
         assert!(later > early * 1.5, "{early} to {later} is not a stretch");
+    }
+
+    /// And they draw back down to points once it is over.
+    #[test]
+    fn the_lines_become_points_again() {
+        let mut warp = Warp::new();
+        run_for(&mut warp, REVEAL_AT + 0.1);
+        assert!(
+            warp.streaks.iter().all(|s| s.len <= 2.0),
+            "something is still stretched out"
+        );
     }
 
     /// They come round again rather than piling up against the edge.
@@ -376,9 +442,7 @@ mod tests {
     fn what_leaves_comes_back_from_the_middle() {
         let mut warp = Warp::new();
         let reach = (W * W + H * H).sqrt() / 2.0;
-        for _ in 0..200 {
-            warp.step(0.02, W, H);
-        }
+        run_for(&mut warp, TRAVEL - 0.1);
         assert!(
             warp.streaks.iter().all(|s| s.dist - s.len <= reach + 1.0),
             "something is stuck outside the frame"
@@ -389,27 +453,29 @@ mod tests {
         );
     }
 
+    /// The words are the arrival, so they must not turn up during the journey.
     #[test]
-    fn the_words_wait_and_then_arrive() {
+    fn the_words_wait_until_it_has_stopped() {
         let mut warp = Warp::new();
-        warp.step(0.1, W, H);
-        assert_eq!(warp.reveal(), 0.0, "they turned up straight away");
+        run_for(&mut warp, TRAVEL);
+        assert_eq!(warp.reveal(), 0.0, "they turned up while it was still going");
 
-        for _ in 0..100 {
-            warp.step(0.05, W, H);
-        }
+        run_for(&mut warp, STOPPING - 0.05);
+        assert_eq!(warp.reveal(), 0.0, "they turned up while it was slowing");
+
+        run_for(&mut warp, REVEAL_OVER + 0.1);
         assert_eq!(warp.reveal(), 1.0, "they never finished arriving");
+        assert!(warp.field() < 1.0, "the stars never dimmed for them");
     }
 
     #[test]
     fn opening_it_again_starts_from_the_beginning() {
         let mut warp = Warp::new();
-        for _ in 0..60 {
-            warp.step(0.05, W, H);
-        }
+        run_for(&mut warp, 2.0);
         assert!(warp.elapsed > 0.0);
         warp.restart();
         assert_eq!(warp.elapsed, 0.0);
         assert_eq!(warp.reveal(), 0.0);
+        assert!(!warp.stopped());
     }
 }

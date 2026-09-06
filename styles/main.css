@@ -692,6 +692,33 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
     :root:not([data-theme="solarized"]) .cta { background: color(display-p3 0.12 1 0.46); color: color(display-p3 0.01 0.09 0.04); }
     :root:not([data-theme="solarized"]) .cta:hover { box-shadow: 0 6px 32px color(display-p3 0.1 1 0.45 / 0.45); }
 
+    /* The arrival is the brightest thing the site ever puts on screen, and on
+     * a display with headroom it should be uncomfortable. White at the top of
+     * P3, with the glow around it in the widest green there is. */
+    :root:not([data-theme="solarized"]) .warp-reveal {
+      color: color(display-p3 1 1 1);
+      text-shadow:
+        0 0 22px color(display-p3 0.55 1 0.78 / 0.95),
+        0 0 60px color(display-p3 0.2 1 0.55 / 0.7),
+        0 0 140px color(display-p3 0.12 1 0.46 / 0.5);
+    }
+
+    :root:not([data-theme="solarized"]) .warp-reveal .phrase {
+      border-bottom-color: color(display-p3 0.35 1 0.65);
+    }
+
+    :root:not([data-theme="solarized"]) .warp-reveal b {
+      color: color(display-p3 0.45 1 0.72);
+    }
+
+    :root:not([data-theme="solarized"]) .streak {
+      background: linear-gradient(
+        90deg,
+        color(display-p3 0.6 1 0.82 / 0),
+        color(display-p3 0.5 1 0.78)
+      );
+    }
+
     :root:not([data-theme="solarized"]) .scrim {
       background:
         linear-gradient(90deg, var(--bg) 2%, rgba(4, 7, 10, 0.82) 20%,
@@ -707,7 +734,9 @@ button.dock-item:hover { color: var(--fg); background: rgba(62, 224, 138, 0.09);
  * page is already correct without it. */
 @supports (dynamic-range-limit: no-limit) {
   @media (dynamic-range: high) {
-    :root:not([data-theme="solarized"]) { dynamic-range-limit: no-limit; }
+    :root:not([data-theme="solarized"]),
+    :root:not([data-theme="solarized"]) .warp,
+    :root:not([data-theme="solarized"]) .warp-reveal { dynamic-range-limit: no-limit; }
   }
 }
 
@@ -784,15 +813,25 @@ button.wordmark:focus-visible {
   letter-spacing: -0.015em;
   color: #fff;
   opacity: 0;
-  text-shadow: 0 0 60px var(--green-dim);
+  text-shadow:
+    0 0 18px rgba(126, 245, 184, 0.55),
+    0 0 70px rgba(62, 224, 138, 0.35);
 }
 
-/* The three that make the name. */
-.warp-reveal u {
+/* One line under the whole of it. */
+.warp-reveal .phrase {
+  display: inline;
+  border-bottom: 0.06em solid var(--name);
+  padding-bottom: 0.14em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* The three letters that make the name are still marked, or the reveal reveals
+ * nothing — but by colour now, since the underline belongs to the phrase. */
+.warp-reveal b {
   color: var(--name);
-  text-decoration: none;
-  border-bottom: 3px solid var(--name);
-  padding-bottom: 0.04em;
+  font-weight: inherit;
 }
 
 .warp-dismiss {
