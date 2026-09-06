@@ -313,7 +313,13 @@ fn follow_history(set_page: WriteSignal<Page>, set_theme: WriteSignal<route::The
 }
 
 /// Where the reader's choice of theme is kept between visits.
-const THEME_KEY: &str = "xag.theme";
+/// Not `xag.theme`, which is deliberately abandoned: everything written under
+/// that name may have been a theme nobody chose, and there is no way to tell
+/// which. A new name drops all of it once, and readers stuck in the wrong
+/// palette on `xag-lang.org` get their domain's own back without clearing
+/// anything by hand.
+const THEME_KEY: &str = "xag.theme.picked";
+const RETIRED_THEME_KEY: &str = "xag.theme";
 
 /// What the reader chose last time, if they have been here before.
 fn stored_theme() -> Option<route::Theme> {
@@ -338,6 +344,7 @@ fn theme_for_host() -> route::Theme {
 fn remember_theme(theme: route::Theme) {
     if let Some(store) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) {
         let _ = store.set_item(THEME_KEY, theme.slug());
+        let _ = store.remove_item(RETIRED_THEME_KEY);
     }
 }
 
