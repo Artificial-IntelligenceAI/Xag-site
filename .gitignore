@@ -1,3 +1,6 @@
 .DS_Store
 /target
 /dist
+
+# wrangler keeps its own state here; it is not part of the site.
+/.wrangler
