@@ -363,15 +363,17 @@ pub const CREDITS: Page = Page {
 
 /// What the language is like, in pairs: what it gives, and what that costs.
 ///
-/// Each of them is true of the other. Nothing is inferred *because* the chain
-/// is explicit; it rejects programs *because* it is safe without a collector;
-/// it builds slowly *because* of what it does to run quickly. A page that
-/// listed only the first of each pair would be describing a different language.
+/// Each of them is true of the other. The syntax is verbose *because* the
+/// chain is explicit and nothing is inferred; it may refuse a working program
+/// *because* it is safe without a collector, and a checker that never refused
+/// one would not be checking; it builds slowly *because* of what it does to
+/// run quickly. A page that listed only the first of each pair would be
+/// describing a different language.
 pub const TAGLINE: [(&str, bool); 6] = [
     ("Dot-Chained Syntax", true),
-    ("Nothing Is Inferred", false),
+    ("Unusual & Verbose Syntax", false),
     ("Safe", true),
-    ("Rejects Programs That Would Run", false),
+    ("Steep Learning Curve & Could Reject Working Programs", false),
     ("Excellent Runtime Performance", true),
     ("Slow Compilation Time", false),
 ];

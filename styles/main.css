@@ -116,8 +116,13 @@ body {
 }
 
 .tagline {
-  font-size: clamp(1.05rem, 2.1vw, 1.55rem);
+  /* Six lines rather than four, and the longest of them is long. Measured at
+   * 1440: the text runs 530px in a 605px column, so there is an eighth of the
+   * width spare for a machine whose fonts come out wider. A step larger left
+   * only a twenty-fifth. */
+  font-size: clamp(1.02rem, 1.95vw, 1.42rem);
   line-height: 1.4;
+  text-wrap: pretty;
   letter-spacing: -0.015em;
   font-weight: 400;
   margin: 0 0 1.75rem;
