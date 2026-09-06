@@ -72,10 +72,13 @@ fn main() {
     }
 
     // And the root, which decides its theme from the domain it was asked on.
+    // Its canonical is the themed address rather than `/`, because those two
+    // are the same page and only one of them is in the sitemap. Saying `/` here
+    // left a crawler with two addresses each claiming to be the one.
     fs::write(&index, html::document(
         &PAGES[0],
         None,
-        &format!("{site}/"),
+        &format!("{site}/{}", canonical_of(PAGES[0].slug)),
         &css,
         &js,
         &wasm,
@@ -178,4 +181,27 @@ fn crawler_files(dist: &Path, site: &str) {
 fn fail(message: &str) -> ! {
     eprintln!("prerender: {message}");
     std::process::exit(1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_root_is_indexed_under_the_address_the_sitemap_lists() {
+        // `/` and `/alien` are one page. The sitemap names the second, so the
+        // first must not name itself.
+        assert_eq!(canonical_of(PAGES[0].slug), "alien");
+    }
+
+    #[test]
+    fn every_page_has_a_canonical_under_one_theme() {
+        for page in PAGES.iter() {
+            let one = canonical_of(page.slug);
+            assert!(
+                one == "alien" || one.starts_with("alien/"),
+                "{one} is not under the theme the sitemap lists"
+            );
+        }
+    }
 }
