@@ -166,7 +166,9 @@ pub const HOME: Page = Page {
                      without running it.",
                 ),
                 Block::Warning(
-                    "There is no install yet. Building from source is the way to run it.",
+                    "There is no release: no archive, no formula, no version to ask \
+                     for. Building from source is how it is run, and a build can be \
+                     installed from there.",
                 ),
             ],
         },

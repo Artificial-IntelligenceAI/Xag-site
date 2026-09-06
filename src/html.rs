@@ -258,7 +258,7 @@ mod tests {
     fn the_prose_is_in_the_document() {
         let doc = document(&HOME, None, "https://xag-lang.com/", "s.css", "a.js", "a_bg.wasm");
         assert!(doc.contains("Items sit next to each other"));
-        assert!(doc.contains("There is no install yet"));
+        assert!(doc.contains("There is no release"));
         // And the programs, which were run rather than transcribed.
         assert!(doc.contains("sum to 10 = 55"));
         assert!(doc.contains("was moved, and holds nothing now"));
