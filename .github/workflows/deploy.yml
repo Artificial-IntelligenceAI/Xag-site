@@ -87,6 +87,8 @@ jobs:
           # The point of the whole exercise: the words have to be in the HTML.
           grep -q "Two marks, and only two" dist/alien/philosophy.html \
             || { echo "::error::the prose did not make it into the built HTML"; exit 1; }
+          grep -q "google-site-verification" dist/index.html \
+            || { echo "::error::the search-console tag is missing from index.html"; exit 1; }
           grep -q "User-agent" dist/robots.txt \
             || { echo "::error::robots.txt is not a robots file"; exit 1; }
 

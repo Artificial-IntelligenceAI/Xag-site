@@ -516,6 +516,11 @@ pub const QUESTIONS: [Question; 3] = [Question {
     ],
 }];
 
+/// What Google Search Console looks for to believe the site is ours. It is a
+/// public string by design — it proves whoever put it there could edit the
+/// pages, which is the whole claim being made.
+pub const GOOGLE_VERIFICATION: &str = "UClbeB0iC3sBEdpu92QI1imr0DvqR_rZ4fAkoczTrH0";
+
 /// The three things a piece of Xag can be, and what each is.
 pub const MARKS: [(&str, &str, &str); 3] = [
     ("tk-name", "'…'", "a **name**"),

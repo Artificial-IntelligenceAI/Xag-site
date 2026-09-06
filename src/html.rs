@@ -156,6 +156,7 @@ pub fn document(
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{title}</title>
 <meta name="description" content="{summary}" />
+<meta name="google-site-verification" content="{verification}" />
 <link rel="canonical" href="{canonical}" />
 <meta name="color-scheme" content="dark light" />
 <meta property="og:title" content="{title}" />
@@ -187,6 +188,7 @@ init({{ module_or_path: '/{wasm}' }});
         title = escape(page.title),
         summary = escape(&to_text(page.summary)),
         canonical = escape(canonical),
+        verification = crate::content::GOOGLE_VERIFICATION,
         repo = crate::content::REPO,
         body = body(page),
         // The front page stands full height and says what the language is like;
