@@ -156,6 +156,78 @@ fn Marks() -> impl IntoView {
     }
 }
 
+/// One of the blocks down the right of the hero.
+///
+/// A card knows which page its section is on, which the dock does not have to:
+/// two of these land on Design Philosophy and three on Home, and the reader is
+/// not asked to know which.
+#[component]
+fn Card(
+    label: &'static str,
+    icon: &'static str,
+    page: Page,
+    anchor: &'static str,
+    set_page: WriteSignal<Page>,
+) -> impl IntoView {
+    view! {
+        <button
+            class="card"
+            on:click=move |_| {
+                set_page.set(page);
+                go_to(anchor);
+            }
+        >
+            <span class="card-icon" aria-hidden="true">{icon}</span>
+            <span class="card-label">{label}</span>
+            <svg class="card-arrow" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 12h15M13 6l6 6-6 6" />
+            </svg>
+        </button>
+    }
+}
+
+/// Scrolls to a section once the page holding it is in the document.
+///
+/// Two cases, and they need different things. A card pointing at the page the
+/// reader is already on finds its section straight away, because it never left.
+/// A card pointing at another page does not: setting the signal does not put
+/// the new view in the document in the same breath — measured, it is still
+/// absent on the next line and present one task later — so the timeout is what
+/// does the work there.
+///
+/// It deliberately does not wait for an animation frame. A hidden or throttled
+/// page is handed no frames at all, and a jump that quietly does nothing is
+/// worse than one that happens a beat late.
+fn go_to(anchor: &'static str) {
+    if scroll_to(anchor) {
+        return;
+    }
+
+    use wasm_bindgen::closure::Closure;
+    use wasm_bindgen::JsCast;
+
+    let Some(win) = web_sys::window() else { return };
+    let again = Closure::once_into_js(move || {
+        scroll_to(anchor);
+    });
+    let _ = win.set_timeout_with_callback_and_timeout_and_arguments_0(
+        again.as_ref().unchecked_ref(),
+        0,
+    );
+}
+
+/// Says whether it found the thing it was asked to scroll to.
+fn scroll_to(anchor: &str) -> bool {
+    let Some(el) = web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|d| d.get_element_by_id(anchor))
+    else {
+        return false;
+    };
+    el.scroll_into_view();
+    true
+}
+
 /// The parts of the site, in the order they sit in the dock.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Page {
@@ -525,6 +597,21 @@ fn App() -> impl IntoView {
                     <p class="warning">"Early work in progress — nothing here is stable yet."</p>
                     <a class="cta" href="#building">"Build from source"</a>
                 </div>
+
+                {move || at_home().then(|| view! {
+                    <nav class="cards" aria-label="Jump to">
+                        <Card label="Two marks" icon="\'*"
+                              page=Page::Philosophy anchor="marks" set_page=set_page />
+                        <Card label="Ownership" icon="→"
+                              page=Page::Home anchor="ownership" set_page=set_page />
+                        <Card label="Error messages" icon="^^"
+                              page=Page::Home anchor="errors" set_page=set_page />
+                        <Card label="Three engines" icon="≡"
+                              page=Page::Philosophy anchor="engines" set_page=set_page />
+                        <Card label="Build from source" icon=">_"
+                              page=Page::Home anchor="building" set_page=set_page />
+                    </nav>
+                })}
             </div>
         </header>
 
