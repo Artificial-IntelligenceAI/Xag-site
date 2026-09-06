@@ -146,6 +146,9 @@ fn crawler_files(dist: &Path, site: &str) {
     )
     .ok();
 
+    // The whole site in one fetch, for anything reading rather than looking.
+    fs::write(dist.join("llms-full.txt"), xag_site::markdown::everything(site)).ok();
+
     // https://llmstxt.org — a plain summary for anything reading the site
     // rather than looking at it.
     fs::write(
@@ -157,11 +160,14 @@ fn crawler_files(dist: &Path, site: &str) {
              language does; this site is not. Anything here may be out of date, and \
              the repository is where to check.\n\n\
              ## Pages\n\n{}\n\n\
+             ## Everything\n\n\
+             - [The whole site as one document]({}/llms-full.txt)\n\n\
              ## Source\n\n\
              - [Compiler, runtime, engines and oracle]({})\n\
              - [This website]({})\n",
             PAGES[0].summary,
             listed.join("\n"),
+            site,
             xag_site::content::REPO,
             xag_site::content::SITE_REPO,
         ),

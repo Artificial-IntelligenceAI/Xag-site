@@ -125,6 +125,40 @@ fn find_pair(chars: &[char], from: usize) -> Option<usize> {
     (from..chars.len().saturating_sub(1)).find(|&i| chars[i] == '*' && chars[i + 1] == '*')
 }
 
+/// The prose as Markdown.
+///
+/// The markup is already Markdown's, deliberately, so this only has to drop the
+/// one thing Markdown has no idea about: the `{name}` and `{value}` that colour
+/// a literal. The colour is a fact about the page, not about the sentence.
+pub fn to_markdown(source: &str) -> String {
+    let chars: Vec<char> = source.chars().collect();
+    let mut out = String::with_capacity(source.len());
+    let mut i = 0;
+
+    while i < chars.len() {
+        if chars[i] == '`' {
+            if let Some(end) = find(&chars, i + 1, '`') {
+                out.extend(&chars[i..=end]);
+                i = end + 1;
+                // Drop a colour if one follows.
+                if i < chars.len() && chars[i] == '{' {
+                    if let Some(close) = find(&chars, i + 1, '}') {
+                        let kind: String = chars[i + 1..close].iter().collect();
+                        if kind == "name" || kind == "value" {
+                            i = close + 1;
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+        out.push(chars[i]);
+        i += 1;
+    }
+
+    out
+}
+
 /// The prose with every mark taken out, for a meta description or a title.
 pub fn to_text(source: &str) -> String {
     let html = to_html(source);
@@ -199,6 +233,20 @@ mod tests {
     fn an_unfinished_mark_is_left_alone() {
         assert_eq!(to_html("a ` that never closes"), "a ` that never closes");
         assert_eq!(to_html("**never mind"), "**never mind");
+    }
+
+    #[test]
+    fn markdown_keeps_the_markup_and_drops_the_colour() {
+        assert_eq!(
+            to_markdown("`*1000*`{value} is a number under `int64`"),
+            "`*1000*` is a number under `int64`"
+        );
+        assert_eq!(
+            to_markdown("**bold**, _quiet_ and [a link](https://example.org)"),
+            "**bold**, _quiet_ and [a link](https://example.org)"
+        );
+        // A brace that is not a colour is left alone.
+        assert_eq!(to_markdown("`x`{other}"), "`x`{other}");
     }
 
     #[test]

@@ -72,8 +72,9 @@ npx wrangler pages deploy dist --project-name=xag-site
 The middle step is what makes the site readable without WebAssembly. Trunk
 writes one `index.html` for every address; the generator replaces it with a real
 document per route — that page's prose, its own title, and the palette the
-address asked for — and writes `robots.txt`, `sitemap.xml` and `llms.txt`
-beside them. The app then mounts over whatever was served, so a browser gets
+address asked for — and writes `robots.txt`, `sitemap.xml`, `llms.txt` and
+`llms-full.txt` beside them — the last being the whole site as one plain
+document, for anything reading rather than looking. The app then mounts over whatever was served, so a browser gets
 the words first and the sky a moment later.
 
 Both readings come from `src/content.rs`. There is one copy of every sentence,

@@ -79,7 +79,7 @@ jobs:
             echo "::error::dist carries the dev server's autoreload client"
             exit 1
           fi
-          for f in _headers _redirects index.html robots.txt sitemap.xml llms.txt \
+          for f in _headers _redirects index.html robots.txt sitemap.xml llms.txt llms-full.txt \
                    alien.html alien/philosophy.html lite2/credits.html; do
             test -f "dist/$f" || { echo "::error::dist/$f is missing"; exit 1; }
           done
