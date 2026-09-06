@@ -159,16 +159,42 @@ fn Marks() -> impl IntoView {
 
 /// Puts the reader at a section, and keeps them there while the page settles.
 ///
-/// Scrolling once is not enough on arrival. The app is still building — the
-/// sky, the panels, the type — so the section moves after it has been scrolled
-/// to, and the reader ends up above it. So this scrolls, measures where the
-/// section actually ended up, and scrolls again until that stops changing.
+/// This is for a jump made inside the app — a card asking a question, where the
+/// page underneath changes as it goes. Scrolling once is not enough there: the
+/// new page is still being built, so the section moves after it has been
+/// scrolled to and the reader ends up above it. So this scrolls, measures where
+/// the section actually ended up, and scrolls again until that stops changing.
+///
+/// A page being loaded does not come through here. That goes to the top.
 ///
 /// It deliberately does not wait for an animation frame. A hidden or throttled
 /// page is handed no frames at all, and a jump that quietly does nothing is
 /// worse than one that happens a beat late.
 fn go_to(anchor: impl Into<String>) {
+    // Instantly, while settling. The stylesheet asks for smooth scrolling, and
+    // smooth is an animation: calling for it again every sixteen milliseconds
+    // restarts it from wherever it had got to, so a scroll that is corrected a
+    // few times never arrives. The correcting is the point here, so the
+    // animation goes.
+    smooth_scrolling(false);
     settle(anchor.into(), 0, f64::NAN);
+}
+
+/// Turns the stylesheet's smooth scrolling off and on around a jump.
+fn smooth_scrolling(on: bool) {
+    use wasm_bindgen::JsCast as _;
+    let Some(root) = web_sys::window()
+        .and_then(|w| w.document())
+        .and_then(|d| d.document_element())
+        .and_then(|e| e.dyn_into::<web_sys::HtmlElement>().ok())
+    else {
+        return;
+    };
+    if on {
+        let _ = root.style().remove_property("scroll-behavior");
+    } else {
+        let _ = root.style().set_property("scroll-behavior", "auto");
+    }
 }
 
 /// About a second of that, in sixteen-millisecond steps: long enough for
@@ -186,6 +212,7 @@ fn settle(anchor: String, tries: u32, was_at: f64) {
     };
 
     if settled || tries >= GIVE_UP_AFTER {
+        smooth_scrolling(true);
         return;
     }
 
@@ -588,11 +615,10 @@ fn App() -> impl IntoView {
     // Whatever the address said or left out, it says all of it from here on —
     // replacing rather than pushing, so arriving does not leave a step behind
     // it that Back would walk into.
-    // Whatever the address said or left out, it says all of it from here on —
-    // including the section, which the first version of this dropped, so a
-    // refresh lost the place it was refreshing.
-    let arrived_at = anchor_now();
-    write_address(starts_as, opened_at, arrived_at.as_deref(), false);
+    // A load starts at the top, so the address says the page and the theme and
+    // no section. A bar naming somewhere the reader is not looking is worse
+    // than one that says where they are.
+    write_address(starts_as, opened_at, None, false);
     follow_history(set_page, set_theme);
 
     // Runs on mount as well as on every change, so a reader who chose Solarized
@@ -607,8 +633,7 @@ fn App() -> impl IntoView {
             warp::close();
         }
         // Keeping whatever section is being read: a change of palette is not a
-        // change of place, and this runs on mount as well, where dropping it
-        // would undo the address the reader arrived on.
+        // change of place.
         write_address(now, page.get_untracked(), anchor_now().as_deref(), false);
     });
 
@@ -697,54 +722,20 @@ fn main() {
         el.remove();
     }
 
-    // The document the browser scrolled is about to be thrown away and built
-    // again, so whatever position it remembers is a position in something that
-    // no longer exists. We put the reader back ourselves, below.
+    // The browser scrolls the document it was served, and that document is
+    // then thrown away and built again — so any position it remembers is a
+    // position in something that no longer exists.
     if let Some(history) = web_sys::window().and_then(|w| w.history().ok()) {
         let _ = history.set_scroll_restoration(web_sys::ScrollRestoration::Manual);
     }
 
-    let arrived_at = anchor_now();
-
     leptos::mount::mount_to_body(App);
 
-    // Back to where the address said, once the app has built the page that
-    // has it. Without this a refresh lands wherever the old document's
-    // scroll happened to leave the new one.
-    match arrived_at {
-        Some(anchor) => {
-            // Instantly, not smoothly. Sliding down the page on a refresh is a
-            // journey the reader did not ask to take; they were already there.
-            use wasm_bindgen::JsCast as _;
-            let root = web_sys::window()
-                .and_then(|w| w.document())
-                .and_then(|d| d.document_element())
-                .and_then(|e| e.dyn_into::<web_sys::HtmlElement>().ok());
-            if let Some(root) = root.as_ref() {
-                let _ = root.style().set_property("scroll-behavior", "auto");
-            }
-            go_to(anchor);
-            if let Some(root) = root {
-                let restore = wasm_bindgen::closure::Closure::once_into_js(move || {
-                    let _ = root.style().remove_property("scroll-behavior");
-                });
-                if let Some(win) = web_sys::window() {
-                    let _ = win.set_timeout_with_callback_and_timeout_and_arguments_0(
-                        wasm_bindgen::JsCast::unchecked_ref(restore.as_ref()),
-                        1200,
-                    );
-                }
-            }
-        }
-        None => {
-            if let Some(win) = web_sys::window() {
-                win.scroll_to_with_x_and_y(0.0, 0.0);
-            }
-        }
+    // A refresh is a fresh start. Top of the page, every time — no hunting for
+    // a section, no waiting for the layout to settle, nothing to get wrong.
+    if let Some(win) = web_sys::window() {
+        win.scroll_to_with_x_and_y(0.0, 0.0);
     }
-
-    // The rocks are drawn by the markup above and moved by this.
-    space::animate();
 
     // Escape closes the warp, wherever the reader is.
     warp::install();
