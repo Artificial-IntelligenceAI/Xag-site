@@ -173,6 +173,14 @@ mod live {
     }
 
     pub fn start() -> Option<()> {
+        // Entering twice would leave the first context playing with nothing
+        // holding it, which is a sound nobody can then switch off.
+        let already = RUNNING.with(|r| r.borrow().is_some());
+        if already {
+            resume();
+            return Some(());
+        }
+
         let win = web_sys::window()?;
         let ctx = AudioContext::new().ok()?;
         // Safari in particular hands back a suspended context even inside a
@@ -344,6 +352,42 @@ mod live {
         );
     }
 
+    /// A context made before the reader has touched the page is handed back
+    /// suspended, and a suspended context is silence. This is what un-suspends
+    /// it, and it does nothing at all once the ambience has been switched off.
+    pub fn resume() {
+        RUNNING.with(|r| {
+            if let Some(voice) = r.borrow().as_ref() {
+                let _ = voice.ctx.resume();
+            }
+        });
+    }
+
+    /// Starts the ambience, and arranges for the first thing the reader does to
+    /// finish the job if the browser would not let it start on its own.
+    ///
+    /// No browser will play audio at somebody who has not yet interacted with
+    /// the page, and that rule is not one to argue with — so the context is
+    /// built up front and waits, silent, until the first click or key.
+    pub fn arm() {
+        let _ = start();
+
+        let Some(win) = web_sys::window() else { return };
+        let Some(doc) = win.document() else { return };
+
+        let wake = Closure::wrap(Box::new(move |_: web_sys::Event| {
+            resume();
+        }) as Box<dyn FnMut(web_sys::Event)>);
+
+        for event in ["pointerdown", "keydown", "touchstart"] {
+            let _ = doc
+                .add_event_listener_with_callback(event, wake.as_ref().unchecked_ref());
+        }
+
+        // Handed to the page for good; there is nothing later that would drop it.
+        wake.forget();
+    }
+
     /// Faded out rather than cut, and then actually torn down.
     pub fn stop() {
         RUNNING.with(|r| {
@@ -382,12 +426,20 @@ pub fn start() {
 }
 
 #[cfg(target_arch = "wasm32")]
+pub fn arm() {
+    live::arm();
+}
+
+#[cfg(target_arch = "wasm32")]
 pub fn stop() {
     live::stop();
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn start() {}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn arm() {}
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn stop() {}

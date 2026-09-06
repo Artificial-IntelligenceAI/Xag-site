@@ -107,13 +107,14 @@ fn Space() -> impl IntoView {
 
 /// Turns the ambience on and off.
 ///
-/// It starts off, and it starts off on purpose. A page that makes noise at
-/// somebody who did not ask for it is a page they close — and audio that runs
-/// for more than three seconds without a way to stop it fails WCAG 1.4.2. The
-/// browser would refuse to autoplay this anyway, and the browser is right.
+/// It starts on. Nothing may play at a reader who has not touched the page —
+/// no browser would allow it and it would be rude if they did — so the sound
+/// is built and waiting from the first frame, and the first click or key
+/// anywhere on the page lets it through. WCAG 1.4.2 asks that anything running
+/// past three seconds can be stopped, which is what this button is for.
 #[component]
 fn SoundToggle() -> impl IntoView {
-    let (playing, set_playing) = signal(false);
+    let (playing, set_playing) = signal(true);
 
     view! {
         <button
@@ -429,4 +430,7 @@ fn main() {
 
     // The rocks are drawn by the markup above and moved by this.
     space::animate();
+
+    // Built now, heard as soon as the reader touches anything.
+    ambience::arm();
 }
