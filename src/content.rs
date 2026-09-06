@@ -499,8 +499,6 @@ pub const QUESTIONS: [Question; 3] = [Question {
         "What a program can reach is `print.stdout`, `read.stdin`, the \
          arguments it was handed, and a few words that count or fill a list. \
          No files, no network, no clock, no randomness, no square root.",
-        "Nothing turns a number into text. Handing an `int64` to a `str` is \
-         refused, and nothing is provided that does the turning.",
         "A `many` is a fixed length, settled where it is made. It holds one \
          level — a `many` of a `many` is refused — and it cannot be printed \
          whole.",
