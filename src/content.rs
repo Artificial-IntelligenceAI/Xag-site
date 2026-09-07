@@ -391,16 +391,21 @@ pub const CREDITS: Page = Page {
                     "**The compiler** is C++20, with C and a little assembly for the \
                      decimal hardware path and for a test that runs with no operating \
                      system under it, Rust for the oracle that fuzzes the three \
-                     engines, Python for two test scripts, and CMake to build it. It \
-                     is written against **LLVM**, and its grapheme handling comes from \
-                     the **Unicode Character Database**, version 17.0.0.",
+                     engines, Python for two test scripts, and shell to drive the one \
+                     that needs a machine nobody here has — plus CMake, a linker \
+                     script and the odd stand-in header to build all that. It is \
+                     written against **LLVM**, whose licence exception it also \
+                     borrows, and its grapheme handling comes from the **Unicode \
+                     Character Database**, version 17.0.0.",
                 ),
                 Block::Para(
-                    "The decimal arithmetic is checked against Python's `decimal` — \
-                     **libmpdec**, by Stefan Krah — and against IBM's decimal \
-                     floating-point unit, emulated by **QEMU** and linked by \
-                     **ld.lld**. Neither is derived from anything here, which is what \
-                     makes them worth asking.",
+                    "The arithmetic is written against **IEEE 754** and IBM's decimal \
+                     specification, which are read rather than borrowed from. It is \
+                     then checked against Python's `decimal` — **libmpdec**, by Stefan \
+                     Krah — and against IBM's own decimal unit, emulated by **QEMU** \
+                     and linked by **ld.lld**. Those two are there to disagree rather \
+                     than to agree: neither is derived from anything here, which is \
+                     the only reason their agreeing means anything.",
                 ),
                 Block::Para(
                     "**This website** is Rust compiled to WebAssembly: **Leptos** \
