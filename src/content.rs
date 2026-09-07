@@ -41,11 +41,6 @@ pub enum Block {
     Bullets(&'static [(&'static str, &'static str)]),
     /// The questions, each landing on an id of its own.
     Questions,
-    /// The editor that runs a little Xag in the browser. There is nothing to
-    /// put in a document for it, so the built HTML says so instead.
-    Playground,
-    /// A list of plain statements.
-    PlainList(&'static [&'static str]),
     /// Somebody else's words.
     Quote {
         paragraphs: &'static [&'static str],
@@ -71,12 +66,11 @@ pub struct Page {
     pub sections: &'static [Section],
 }
 
-pub const PAGES: [Page; 5] = [HOME, QUESTIONS_PAGE, PLAYGROUND, PHILOSOPHY, CREDITS];
+pub const PAGES: [Page; 4] = [HOME, QUESTIONS_PAGE, PHILOSOPHY, CREDITS];
 
 pub fn page(slug: &str) -> &'static Page {
     match slug {
         "questions" => &QUESTIONS_PAGE,
-        "playground" => &PLAYGROUND,
         "philosophy" => &PHILOSOPHY,
         "credits" => &CREDITS,
         _ => &HOME,
@@ -190,53 +184,6 @@ pub const QUESTIONS_PAGE: Page = Page {
         heading: "Asked",
         blocks: &[Block::Questions],
     }],
-};
-
-// ─────────────────────────── Playground ────────────────────────────
-
-pub const PLAYGROUND: Page = Page {
-    slug: "playground",
-    title: "Playground — Xag",
-    summary: "A small interpreter in the browser for trying Xag's syntax. It is \
-              not the compiler and knows only a little of the language.",
-    lede: "Somewhere to find out how the syntax feels, without cloning anything \
-           or building LLVM.",
-    sections: &[
-        Section {
-            id: "try",
-            heading: "Try it",
-            blocks: &[Block::Playground],
-        },
-        Section {
-            id: "what-this-is",
-            heading: "What this is not",
-            blocks: &[
-                Block::Warning(
-                    "This is not the compiler. It is a few hundred lines written \
-                     for this website, and where it disagrees with `xagc`, it is \
-                     wrong and `xagc` is right.",
-                ),
-                Block::Para(
-                    "It exists because trying a syntax and trusting a language are \
-                     different questions, and the first should not cost a checkout \
-                     and a build of LLVM. It answers the first one only.",
-                ),
-                Block::Para("What it knows:"),
-                Block::PlainList(&crate::play::SUPPORTED),
-                Block::Para("What it does not:"),
-                Block::PlainList(&crate::play::UNSUPPORTED),
-                Block::Para(
-                    "Every program it ships with is run through both it and the \
-                     real compiler, and they agree — that check is \
-                     `src/verify_play.rs` and somebody has to run it. It is not \
-                     protection against the language moving underneath, which \
-                     Xag does, weekly. [Build the compiler]\
-                     (https://github.com/Artificial-IntelligenceAI/Xag-lang) for \
-                     the language itself.",
-                ),
-            ],
-        },
-    ],
 };
 
 // ──────────────────────────── Philosophy ────────────────────────────
@@ -470,7 +417,7 @@ pub struct Question {
     pub answer: &'static [&'static str],
 }
 
-pub const QUESTIONS: [Question; 3] = [Question {
+pub const QUESTIONS: [Question; 2] = [Question {
     id: "only-positives",
     asked: "I've seen languages with only positives. No negatives.",
     short: "They most likely have flaws, but weren't written down.",
@@ -487,32 +434,6 @@ pub const QUESTIONS: [Question; 3] = [Question {
         "Though, you don't have to believe us. Wait, why the fuck does that \
          sound like guilt-tripping? 🤣. Oh shit, now this sounds like fake \
          casualness? Whatever 🤣",
-    ],
-}, Question {
-    id: "what-is-missing",
-    asked: "What major things does Xag not have, that others do?",
-    short: "More than one file, a standard library, and any way to reuse a shape.",
-    answer: &[
-        "A program is one file. `export` and `program` are words the lexer \
-         knows and the parser refuses, so there are no modules, no imports and \
-         no libraries — not other people's, not your own.",
-        "What a program can reach is `print.stdout`, `read.stdin`, the \
-         arguments it was handed, and a few words that count or fill a list. \
-         No files, no network, no clock, no randomness, no square root.",
-        "A `many` is a fixed length, settled where it is made. It holds one \
-         level — a `many` of a `many` is refused — and it cannot be printed \
-         whole.",
-        "There are no generics, no interfaces, no traits and no methods. A \
-         function that works for two types is written twice.",
-        "There are no threads and nothing asynchronous. There is no way to \
-         call C, and none for C to call it.",
-        "The tooling is one binary. No package manager, no formatter, no \
-         language server, no editor support, no debugger.",
-        "Each of those was checked against the compiler rather than read off a \
-         plan, which means the list is only as current as the day it was \
-         written. Some of them are decisions nobody has made and some are \
-         simply not built, and this page does not say which, because saying so \
-         would be a promise about work rather than a fact about the language.",
     ],
 }];
 

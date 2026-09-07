@@ -9,6 +9,5 @@ pub mod content;
 pub mod html;
 pub mod markdown;
 pub mod markup;
-pub mod play;
 pub mod route;
 pub mod syntax;

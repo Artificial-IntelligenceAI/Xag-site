@@ -112,7 +112,6 @@ body {
 .hero.compact .hero-inner { padding: 3.5rem 1.5rem 2.5rem; }
 .hero.compact h1 { font-size: clamp(2.4rem, 8vw, 3.6rem); margin-bottom: 0; }
 .hero.compact .tagline,
-.hero.compact .warning,
 .hero.compact .cta { display: none; }
 
 .hero-words { max-width: 38rem; }
@@ -167,18 +166,39 @@ body {
  * goes between the pairs instead. */
 .tagline .cost + .good { margin-top: 0.7em; }
 
-.hero .warning {
-  display: block;
-  width: fit-content;
+/* Not a footnote. It sits above the name, on every page, in every theme, and
+ * it is the one thing on this site that is meant to be hard to look past —
+ * everything else here can be wrong, and this is what says so. */
+.alarm {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  margin: 0;
+  padding: 0.85rem 1.25rem;
+  background: var(--cost);
+  color: #100402;
   font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--muted);
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  margin: 0 0 2rem;
-  background: rgba(4, 7, 10, 0.55);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  text-align: center;
+  border-bottom: 3px solid #100402;
 }
+
+.alarm a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.alarm a:hover { background: #100402; color: var(--cost); }
+
+@media (max-width: 40rem) {
+  .alarm { font-size: 0.85rem; padding: 0.7rem 1rem; text-align: left; }
+}
+
 
 /* The one link that lives outside `main`, so it says so for itself. */
 .warning a {
@@ -995,7 +1015,6 @@ button.wordmark:focus-visible {
 /* Emphasised text is base1, which is as bright as this palette goes. */
 /* The chip is the one thing that names a dark colour outright, because on the
  * alien theme it has stars behind it and wants to be part-transparent. */
-[data-theme^="solarized"] .hero .warning { background: var(--panel); }
 
 [data-theme^="solarized"] strong,
 [data-theme^="solarized"] .marks-table strong { color: var(--emph); }
@@ -1046,7 +1065,9 @@ button.wordmark:focus-visible {
 
 .theme {
   position: fixed;
-  top: 1.25rem;
+  /* Below the band rather than on top of it: the band is stuck to the top of
+     the viewport and this floats over everything. */
+  top: 4.35rem;
   right: 1.25rem;
   z-index: 7;
   display: flex;
@@ -1100,7 +1121,8 @@ button.wordmark:focus-visible {
 [data-theme^="solarized"] .theme select { background: var(--green-dim); }
 
 @media (max-width: 40rem) {
-  .theme { top: 0.75rem; right: 0.75rem; font-size: 0.65rem; padding: 0.4rem 0.7rem; }
+  /* The band wraps to two lines at this width, so this clears more of it. */
+  .theme { top: 4.6rem; right: 0.75rem; font-size: 0.65rem; padding: 0.4rem 0.7rem; }
 }
 
 /* ══════════════ Silver ══════════════ */
@@ -1211,67 +1233,3 @@ main h3 {
   scroll-margin-top: 2rem;
 }
 
-/* A block that goes and does something rather than asking. */
-.card.does .card-icon { color: var(--good); }
-.card.does .card-label { white-space: normal; line-height: 1.35; }
-
-/* ══════════════ the playground ══════════════ */
-
-.play { margin: 0 0 1.5rem; }
-
-.play-in {
-  display: block;
-  width: 100%;
-  min-height: 16rem;
-  background: var(--bg-soft);
-  color: var(--fg);
-  border: 1px solid var(--rule);
-  border-radius: 5px 5px 0 0;
-  padding: 1rem 1.1rem;
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  line-height: 1.6;
-  tab-size: 4;
-  resize: vertical;
-  white-space: pre;
-  overflow-wrap: normal;
-  overflow-x: auto;
-}
-
-.play-in:focus { outline: 1px solid var(--green-line); outline-offset: -1px; }
-
-.play-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.6rem 1.1rem;
-  border-inline: 1px solid var(--rule);
-  background: var(--panel);
-}
-
-.play-run {
-  border: 0;
-  border-radius: 999px;
-  padding: 0.4rem 1.2rem;
-  background: var(--name);
-  color: var(--on-accent);
-  font: inherit;
-  font-weight: 600;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-.play-run:hover { filter: brightness(1.08); }
-.play-run:focus-visible { outline: 2px solid var(--name); outline-offset: 2px; }
-
-.play-note { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
-
-.play-out {
-  border-radius: 0 0 5px 5px;
-  background: var(--bg-soft);
-  white-space: pre-wrap;
-  min-height: 3rem;
-}
-
-.play-out.waiting code { color: var(--muted); }
-.play-out.stopped code { color: var(--cost); }
