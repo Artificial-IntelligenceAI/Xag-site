@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Xag">
+  <title>Xag</title>
+  <!-- The head. Wider than tall, widest above the middle, and the jaw ends
+       blunt rather than pointed — a point here reads as a map pin, which is
+       what the first four attempts looked like. -->
+  <path d="M50 9 C22 9 5 23 5 40 C5 53 17 64 32 73 C38 77 44 81 50 81
+           C56 81 62 77 68 73 C83 64 95 53 95 40 C95 23 78 9 50 9 Z"
+        fill="#3ee08a"/>
+  <!-- The X sits where a face would be, high enough to leave a jaw under it.
+       Round caps, because every other corner here is round. -->
+  <g stroke="#04070a" stroke-width="12" stroke-linecap="round">
+    <line x1="34" y1="30" x2="66" y2="56"/>
+    <line x1="66" y1="30" x2="34" y2="56"/>
+  </g>
+</svg>
