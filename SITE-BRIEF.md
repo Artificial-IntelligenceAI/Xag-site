@@ -75,13 +75,16 @@ paraphrasing.
 - **Feature lists.** Modules, generics, growable arrays and nested arrays do not
   exist yet. Structs arrived on 2026-09-06. Anything enumerating what the
   language has will be wrong soon.
-- **Install instructions.** Xag cannot currently be installed: the runtime
-  library path is baked in as an absolute path. Building from source works;
-  installing does not. Do not imply otherwise.
+- **Install instructions.** Xag installs as of 2026-09-07 — `cmake --install`
+  puts a working compiler under a prefix, and `xagc` finds its runtime rather
+  than having the path baked in. What there is no such thing as is a *release*:
+  no archive, no formula, no version to ask for. Say that, and leave the
+  commands to the README, which changes with them.
 - **Performance claims.** There are no published numbers and the fast interpreter
   is actively being optimised in another session.
-- **The open design questions.** `design/syntax.md` ends with seven of them.
-  They are genuinely open and will change.
+- **The open design questions.** `design/syntax.md` ends with a handful of them
+  — five on 2026-09-07, seven when this was written. Do not count them here;
+  the number is one more thing to keep true, and the answer is in that file.
 
 ### A measured number goes stale too, and looks like it cannot
 
