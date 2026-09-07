@@ -140,16 +140,16 @@ Any path serves `index.html` and the app reads it from there, which is what
 `_redirects` is for. A host that does not honour it will 404 on everything but
 the root.
 
-The two domains are the same site and differ only in where they start: `.org`
-opens in silver, `.com` in alien. It is the last word in the order, not the
-first — an address that names a theme wins, and so does a choice the reader
-made on a previous visit.
+A theme comes from the address if it names one, then from what the reader chose
+last time, then alien. Nothing is decided by which host was asked, because only
+one of them answers.
 
-[xag-lang.com](https://xag-lang.com) and [xag-lang.org](https://xag-lang.org)
-are both live, and so is `www` on each. They are four custom domains on one
-Pages project rather than a redirect: every host serves the same documents, and
-every document names `https://xag-lang.com/alien` as its canonical, so the four
-are one page to anything indexing them.
+[xag-lang.com](https://xag-lang.com) is the site. `www` on it answers too, and
+[xag-lang.org](https://xag-lang.org) with its own `www` redirects there — a
+Cloudflare rule on that zone, ahead of Pages, so nothing on the `.org` side ever
+reaches the app. It was serving the same documents until 2026-09-07, opening in
+silver rather than alien; redirecting is one address to keep true instead of
+four, and silver is still at `/silver` for anyone who wants it.
 
 ## Licence
 

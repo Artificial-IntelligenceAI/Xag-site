@@ -329,14 +329,6 @@ fn stored_theme() -> Option<route::Theme> {
         .and_then(|v| route::Theme::from_slug(&v))
 }
 
-/// Which theme a first visit opens in, which is the domain's business.
-fn theme_for_host() -> route::Theme {
-    let host = web_sys::window()
-        .and_then(|w| w.location().hostname().ok())
-        .unwrap_or_default();
-    route::default_theme(&host)
-}
-
 /// Writes down a theme the reader picked. Only a choice is written: a theme
 /// that came from the address or from the domain is not one, and storing those
 /// made the first `/alien` link opened on `xag-lang.org` overrule that domain's
@@ -617,10 +609,11 @@ fn App() -> impl IntoView {
     // if it does not, the reader's last choice does.
     let (named_theme, opened_at) = place_now();
     // The address wins if it names a theme, then what the reader chose last
-    // time, then the domain they came in on.
+    // time, then alien. There is no per-domain default any more: `.org`
+    // redirects, so nothing arrives on a host that wants a different one.
     let starts_as = named_theme
         .or_else(stored_theme)
-        .unwrap_or_else(theme_for_host);
+        .unwrap_or(route::Theme::Alien);
 
     let (page, set_page) = signal(opened_at);
     let at_home = move || page.get() == Page::Home;
