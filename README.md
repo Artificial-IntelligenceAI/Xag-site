@@ -151,6 +151,40 @@ reaches the app. It was serving the same documents until 2026-09-07, opening in
 silver rather than alien; redirecting is one address to keep true instead of
 four, and silver is still at `/silver` for anyone who wants it.
 
+## Credits
+
+**Tankun Sriket designs Xag. Claude writes the code.** The language, the syntax
+and what the project is for are his; the compiler, the runtime, the engines, the
+oracle and this website are written by Anthropic's Claude under his direction.
+That is the arrangement as it stands, and this line changes when it does.
+
+What this repository is made of:
+
+| | |
+| --- | --- |
+| Rust | the whole site — routing, markup, the sky, the prose as data |
+| CSS | written by hand, one file |
+| HTML | one file, the Trunk template |
+| JavaScript | a few lines in that file, which start the WebAssembly and nothing else |
+| Xag | five sample programs, run against the real compiler before they go on a page |
+| TOML, YAML, Markdown | build, deploy and this |
+
+What it is built with: [Leptos](https://leptos.dev) draws the pages,
+[wasm-bindgen](https://github.com/rustwasm/wasm-bindgen) and `web-sys` reach the
+browser, [Trunk](https://trunkrs.dev) builds it, and
+[Binaryen](https://github.com/WebAssembly/binaryen)'s `wasm-opt` shrinks what
+ships. `console_error_panic_hook` puts a Rust panic in the browser console.
+Cloudflare Pages serves it.
+
+The two light themes are **Solarized**, by Ethan Schoonover, used as specified
+rather than adjusted to taste. No typeface is bundled or fetched — the pages ask
+for whatever the machine already has.
+
+The compiler's own credits, including LLVM, the Unicode Character Database,
+libmpdec and QEMU, are in [its
+README](https://github.com/Artificial-IntelligenceAI/Xag-lang#credits) and on
+[the credits page](https://xag-lang.com/alien/credits).
+
 ## Licence
 
 `LICENSE` governs, and it splits the repository in two. The code — Rust, HTML,

@@ -380,16 +380,41 @@ pub const CREDITS: Page = Page {
             heading: "Credits",
             blocks: &[
                 Block::Para(
-                    "Xag is designed by human Tankun Sriket, and implemented by AI \
-                     (Anthropic's Claude). The compiler is written against LLVM, and \
-                     its grapheme handling is built from the Unicode Character \
-                     Database, version 17.0.0.",
+                    "**Tankun Sriket designs Xag. Claude writes the code.** That is \
+                     the arrangement as it stands — the language, the syntax and what \
+                     the project is for are his; the compiler, the runtime, the \
+                     engines, the oracle and this website are written by Anthropic's \
+                     Claude under his direction. If that changes, this line changes \
+                     with it.",
+                ),
+                Block::Para(
+                    "**The compiler** is C++20, with C and a little assembly for the \
+                     decimal hardware path and for a test that runs with no operating \
+                     system under it, Rust for the oracle that fuzzes the three \
+                     engines, Python for two test scripts, and CMake to build it. It \
+                     is written against **LLVM**, and its grapheme handling comes from \
+                     the **Unicode Character Database**, version 17.0.0.",
                 ),
                 Block::Para(
                     "The decimal arithmetic is checked against Python's `decimal` — \
-                     libmpdec, by Stefan Krah — and against IBM's decimal \
-                     floating-point unit under QEMU. Neither is derived from anything \
-                     here, which is what makes them worth asking.",
+                     **libmpdec**, by Stefan Krah — and against IBM's decimal \
+                     floating-point unit, emulated by **QEMU** and linked by \
+                     **ld.lld**. Neither is derived from anything here, which is what \
+                     makes them worth asking.",
+                ),
+                Block::Para(
+                    "**This website** is Rust compiled to WebAssembly: **Leptos** \
+                     draws it, **wasm-bindgen** and **web-sys** reach the browser, \
+                     **Trunk** builds it and **Binaryen**'s `wasm-opt` shrinks what \
+                     ships. The CSS is written by hand. There is a handful of \
+                     JavaScript in one file, which exists only to start the \
+                     WebAssembly. **Cloudflare Pages** serves it.",
+                ),
+                Block::Para(
+                    "The two light themes are **Solarized**, by Ethan Schoonover, \
+                     used as specified rather than adjusted to taste. No typeface is \
+                     bundled or fetched: the pages ask for whatever the machine \
+                     already has.",
                 ),
             ],
         },
