@@ -153,9 +153,23 @@ four, and silver is still at `/silver` for anyone who wants it.
 
 ## Licence
 
-The site is dual licensed under Apache-2.0 and MIT (`LICENSE-APACHE`,
-`LICENSE-MIT`). **The compiler is not**: it moved to `Apache-2.0 WITH
-LLVM-exception` on 2026-09-07, so that a program built with Xag — which has the
-runtime linked into it — owes no attribution, while a modified compiler does.
-The licence page in `src/content.rs` says the compiler's terms and has to keep
-matching them.
+`LICENSE` governs, and it splits the repository in two. The code — Rust, HTML,
+CSS, build scripts, and the comments in them — is Apache-2.0 with one added
+condition: anything built on it must show the `NOTICE` line **where its own
+users can see it**, not only in the source. The prose the site displays is not
+licensed at all; copyright on it is reserved. Take the machinery, write your own
+words.
+
+That added condition means the repository as a whole is not open source by the
+OSI definition, which `LICENSE` says out loud rather than leaving to be
+inferred. Say "the site's code is open" and not "the site is open source".
+
+MIT is gone. A dual grant lets the taker pick, and MIT asks only that a
+copyright line survive somewhere in the source — which is not the credit that
+was wanted.
+
+**The compiler is licensed differently**: `Apache-2.0 WITH LLVM-exception` as of
+2026-09-07, so a program built with Xag — which has the runtime linked into it —
+owes no attribution, while a modified compiler does. The licence page in
+`src/content.rs` states the compiler's terms and the site's, and has to keep
+matching both.

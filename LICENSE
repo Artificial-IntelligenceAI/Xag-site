@@ -1,0 +1,46 @@
+Xag website — licence
+Copyright 2026 Tankun Sriket
+
+Two different things live in this repository, and they are not licensed the
+same way. Read both.
+
+
+1. THE CODE
+
+   The Rust, HTML, CSS, build scripts and configuration — and the comments
+   inside them, which are part of the code and may be copied with it.
+
+   Licensed under the Apache License, Version 2.0 (see LICENSE-APACHE), with
+   one added condition:
+
+     ATTRIBUTION. Any work that uses this code, in whole or in part, must
+     display the contents of the NOTICE file somewhere its own users can see
+     it — an about screen, a colophon, a footer, a credits page, or the
+     equivalent for whatever it is. Keeping the notice only in the source is
+     not enough.
+
+   Everything else in Apache-2.0 applies unchanged, including the patent
+   grant and the disclaimer of warranty.
+
+
+2. THE PROSE
+
+   The English sentences this site displays: the page text, the taglines, the
+   questions and the answers to them. Whether a sentence sits in a Markdown
+   file or inside a Rust string literal makes no difference to this.
+
+   Not licensed. Copyright is reserved.
+
+   Quote it as copyright law allows anybody to quote anything. Do not
+   reproduce it as the text of another site.
+
+   Take the machinery and write your own words. The machinery is the part
+   that was hard.
+
+
+A NOTE ON WHAT THIS IS
+
+Because of the added condition, and because the prose is not licensed at all,
+this repository as a whole is not open source under the OSI definition. The
+code is open with a condition attached; the writing is not open. Said plainly
+here so that nobody has to work it out from the files.

@@ -364,6 +364,15 @@ pub const CREDITS: Page = Page {
                      defined in the Apache-2.0 license, shall be licensed as above, \
                      without any additional terms or conditions.",
                 ),
+                Block::Para(
+                    "**This website is licensed differently from the compiler.** Its \
+                     code is Apache-2.0 with one condition added: anything built on it \
+                     has to show the credit where its own readers can see it, not only \
+                     in the source. The words on these pages are not licensed at all. \
+                     Take the machinery and write your own — the machinery is the part \
+                     that was hard. The terms are in [the site's LICENSE]\
+                     (https://github.com/Artificial-IntelligenceAI/Xag-site/blob/main/LICENSE).",
+                ),
             ],
         },
         Section {
