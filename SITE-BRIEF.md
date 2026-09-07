@@ -143,5 +143,10 @@ rather answer than have the site say something wrong.
 - Commits are authored `Tankun Sriket <tankun.sriket@safetyboltlang.invalid>`,
   with a `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` trailer.
   Tankun's own commits use his real address; that is deliberate, leave it.
-- Dual licensed Apache-2.0 and MIT. Both files are already here.
+- The site is dual licensed Apache-2.0 and MIT; both files are here. **The
+  compiler is not** — it is `Apache-2.0 WITH LLVM-exception` as of 2026-09-07,
+  so that using Xag to build something costs no attribution (the runtime is
+  linked into every program it builds) while changing Xag itself asks for a
+  note saying what changed. The site's licence page states the compiler's
+  terms, so it goes stale the way a code sample does.
 - Commit messages say what changed and why, in sentences, without a type prefix.

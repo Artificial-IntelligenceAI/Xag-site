@@ -153,4 +153,9 @@ four, and silver is still at `/silver` for anyone who wants it.
 
 ## Licence
 
-Dual licensed under Apache-2.0 and MIT, matching the compiler.
+The site is dual licensed under Apache-2.0 and MIT (`LICENSE-APACHE`,
+`LICENSE-MIT`). **The compiler is not**: it moved to `Apache-2.0 WITH
+LLVM-exception` on 2026-09-07, so that a program built with Xag — which has the
+runtime linked into it — owes no attribution, while a modified compiler does.
+The licence page in `src/content.rs` says the compiler's terms and has to keep
+matching them.

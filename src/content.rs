@@ -341,24 +341,28 @@ pub const CREDITS: Page = Page {
             heading: "License",
             blocks: &[
                 Block::Para("Copyright 2026 Tankun Sriket"),
-                Block::Para("Licensed under either of"),
-                Block::Bullets(&[
-                    (
-                        "Apache License, Version 2.0",
-                        "[apache.org/licenses/LICENSE-2.0]\
-                         (https://www.apache.org/licenses/LICENSE-2.0)",
-                    ),
-                    (
-                        "MIT license",
-                        "[opensource.org/licenses/MIT](https://opensource.org/licenses/MIT)",
-                    ),
-                ]),
-                Block::Para("at your option."),
+                Block::Para(
+                    "Apache License, Version 2.0, with the LLVM exception — \
+                     `Apache-2.0 WITH LLVM-exception`.",
+                ),
+                Block::Para(
+                    "**Writing programs in Xag costs you nothing.** Every program the \
+                     compiler builds has the Xag runtime linked into it, so a piece of \
+                     the project ends up inside what you ship. The exception is there \
+                     for exactly that: those embedded portions may be redistributed \
+                     without carrying any notice, so a program built with Xag owes \
+                     nothing to anybody and need not mention the project anywhere.",
+                ),
+                Block::Para(
+                    "**Changing Xag itself is where credit is due.** Distribute a \
+                     modified compiler, runtime or tool and the Apache terms apply in \
+                     full — keep the notices, and say plainly which files you changed.",
+                ),
                 Block::Para(
                     "Unless you explicitly state otherwise, any contribution \
                      intentionally submitted for inclusion in this project by you, as \
-                     defined in the Apache-2.0 license, shall be dual licensed as \
-                     above, without any additional terms or conditions.",
+                     defined in the Apache-2.0 license, shall be licensed as above, \
+                     without any additional terms or conditions.",
                 ),
             ],
         },
