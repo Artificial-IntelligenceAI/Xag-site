@@ -40,3 +40,8 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[[bin]]
+name = "verify-samples"
+path = "src/verify_samples.rs"
+required-features = ["prerender"]

@@ -87,6 +87,30 @@ every page reconnecting forever to nothing. `trunk build --release` on its own
 does not include it; the check is that `dist/index.html` contains no
 `__TRUNK_ADDRESS__`.
 
+## Checking the samples still compile
+
+Every program on the site is run against the compiler before it goes up. That
+was the whole rule, and it says nothing about the day after: on 2026-09-08 the
+front page was found showing `borrowing.xag`, which the compiler had refused
+since `ref` and `refmut` became `loan` and `loanmut`. A program presented as
+Xag that Xag rejects, live, found by accident.
+
+```sh
+XAGC=/path/to/xagc cargo run --features prerender --bin verify-samples
+```
+
+It checks the three ways a sample rots: a working program that stops compiling,
+a working program whose output changes, and a refused program that stops being
+refused or changes its error code. Samples in the repository but not on a page
+are checked too — an uncompilable file is a trap for whoever reaches for it
+next, which is how the stale one got published.
+
+The expected outputs are written in `src/verify_samples.rs` rather than read out
+of `content.rs`. A checker that reads the page it is checking agrees with the
+page whatever either of them says.
+
+Not in CI, because CI has no compiler. Run it after either side changes.
+
 `_redirects` makes every path serve `index.html`, without which the routing has
 nothing to read. `_headers` keeps the page itself uncached — every path is the
 same HTML, and a cached one strands a reader on an old build — while the hashed
