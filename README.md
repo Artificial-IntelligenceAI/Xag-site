@@ -1,4 +1,36 @@
-# Xag website
+# Xag website — superseded
+
+> **This is not what [xag-lang.com](https://xag-lang.com) serves, and has not
+> been since 8 September 2026.** Nothing here is maintained. It is kept because
+> it is what the domain served until that day, and because a few things in it
+> were worked out the hard way and are worth reading.
+
+The site that replaced it is a different codebase — HTML, CSS and TypeScript
+built by Vite, one `.html` per page, no router and no prerender step. It is
+**closed source**, so there is no repository to link to. This one stays open
+under the licence it has.
+
+Why it was replaced is not that anything here stopped working. Tankun decided to
+redesign the site and to build the new one on a plain web stack, and the two
+sites share no code, so it is a replacement rather than a rewrite in place.
+
+What went with it, for anyone following an old link:
+
+- The pages. `questions`, `philosophy`, `credits`, and the `alien` / `silver` /
+  `lite` / `lite2` theme addresses are gone rather than moved. They answer
+  `301` to the front page.
+- The four-theme scheme. The new site has three — Alien, Solarized Dark,
+  Solarized Light — and a link can still name one: `/?theme=solarized-light`.
+- The prerender step, and with it `llms-full.txt`. Real files per page need no
+  generator; `llms.txt` is the whole site now.
+
+**The deploy workflow has been removed.** It ran on every push to `main` and
+deployed to `xag-site` — the same Cloudflare Pages project the new site is on —
+so a push to this repository would have put this site back over that one. That
+is the sort of thing that is only ever found by looking, so it is written down
+here rather than left as a surprise.
+
+---
 
 The website for [Xag](https://github.com/Artificial-IntelligenceAI/Xag-lang), a
 programming language built around high performance, helpful error messages, and
@@ -52,16 +84,15 @@ look like going stale.
 Cloudflare Pages, serving `dist/` as static files. Both domains point at the
 same project — the app reads which one it is on.
 
-A push to `main` deploys it: `.github/workflows/deploy.yml` runs the tests,
-builds, checks what it is about to ship, and hands `dist/` to Cloudflare. It
-needs two repository secrets — `CLOUDFLARE_API_TOKEN`, scoped to Cloudflare
-Pages: Edit, and `CLOUDFLARE_ACCOUNT_ID`.
+It used to deploy itself: `.github/workflows/deploy.yml` ran on every push to
+`main`, built, checked what it was about to ship, and handed `dist/` to
+Cloudflare. **That file is gone**, because the Pages project it deployed to —
+`xag-site` — is the one now serving the site that replaced this. Left in place,
+any push here would have reverted a live site. The repository secrets it used,
+`CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, are no longer read by
+anything in this repository.
 
-It uses no third-party actions. Everything but checking out and caching is a
-command that can be read in the file and run by hand, which is the same reason
-the compiler's oracle has no dependencies.
-
-By hand, when that is wanted:
+By hand, which is all that is left, and which would overwrite the live site:
 
 ```sh
 trunk build --release          # with `trunk serve` NOT running
